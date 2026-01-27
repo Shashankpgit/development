@@ -1,5 +1,4 @@
-# Build stage
-FROM node:18-alpine as build
+FROM node:20-alpine
 
 WORKDIR /app
 
@@ -7,26 +6,15 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# Copy source code and build
+# Copy source code
 COPY . .
+
+# Build the application (optional, if you want only the artifacts in the layer)
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine
+# Expose the port commonly used by Vite
+EXPOSE 5173
 
-# Copy built assets from build stage
-COPY --from=build /app/dist /usr/share/nginx/html
-
-# Add custom nginx config to handle client-side routing
-RUN echo 'server { \
-    listen 80; \
-    location / { \
-        root /usr/share/nginx/html; \
-        index index.html index.htm; \
-        try_files $uri $uri/ /index.html; \
-    } \
-}' > /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+# Run in development mode (or change to 'preview' to serve the built artifacts)
+# Use --host to ensure it's accessible outside the container
+CMD ["npm", "run", "dev", "--", "--host"]
