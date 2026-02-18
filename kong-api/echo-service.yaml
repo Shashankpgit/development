@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-service
+  namespace: kong-demo
+spec:
+  selector:
+    app: echo
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 80
