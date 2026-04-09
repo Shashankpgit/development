@@ -1,0 +1,40 @@
+replicaCount: 1
+
+image:
+  repository: todo-backend
+  tag: latest
+  pullPolicy: Never   # Use local minikube image
+
+service:
+  type: ClusterIP
+  port: 8000
+
+env:
+  PROJECT_NAME: "Todo API"
+  VERSION: "1.0.0"
+  # DATABASE_URL is set via secret
+
+db:
+  host: postgresql.default.svc.cluster.local
+  port: 5432
+  name: tododb
+  user: todouser
+  # password set via secret
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "256Mi"
+
+livenessProbe:
+  path: /health
+  initialDelaySeconds: 15
+  periodSeconds: 20
+
+readinessProbe:
+  path: /health
+  initialDelaySeconds: 5
+  periodSeconds: 10

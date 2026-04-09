@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Todo App</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Todo App</h1>
+      <div id="stats-bar">
+        <span id="stat-total">Total: 0</span>
+        <span id="stat-done">Done: 0</span>
+        <span id="stat-pending">Pending: 0</span>
+      </div>
+    </header>
+
+    <section class="add-section">
+      <form id="todo-form">
+        <input
+          type="text"
+          id="title-input"
+          placeholder="Todo title..."
+          maxlength="100"
+          required
+        />
+        <input
+          type="text"
+          id="desc-input"
+          placeholder="Description..."
+          maxlength="500"
+        />
+        <button type="submit">Add Todo</button>
+      </form>
+    </section>
+
+    <section class="filter-section">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="pending">Pending</button>
+      <button class="filter-btn" data-filter="completed">Completed</button>
+    </section>
+
+    <div id="error-banner" class="error-banner hidden"></div>
+
+    <section id="todo-list" class="todo-list">
+      <div class="loading">Loading...</div>
+    </section>
+  </div>
+
+  <div id="edit-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Edit Todo</h2>
+      <input type="text" id="edit-title" placeholder="Title" maxlength="100" />
+      <input type="text" id="edit-desc" placeholder="Description" maxlength="500" />
+      <label class="checkbox-label">
+        <input type="checkbox" id="edit-completed" />
+        Completed
+      </label>
+      <div class="modal-actions">
+        <button id="save-edit-btn">Save</button>
+        <button id="cancel-edit-btn" class="secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

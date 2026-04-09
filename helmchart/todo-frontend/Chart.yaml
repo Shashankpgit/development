@@ -1,0 +1,6 @@
+apiVersion: v2
+name: todo-frontend
+description: Nginx-served static frontend for the Todo App
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
