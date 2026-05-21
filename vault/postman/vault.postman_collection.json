@@ -1,34 +1,181 @@
 {
-  "info": {
-    "name": "Personal Vault",
-    "description": "API collection for the Personal Vault application.\n\nHow to use:\n1. Import this file into Postman\n2. Create an environment with variable: base_url = http://localhost:8000\n3. After login (Phase 4), the token is saved automatically into {{token}}\n\nThis collection grows with every phase.",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "variable": [
-    {
-      "key": "base_url",
-      "value": "http://localhost:8000",
-      "type": "string"
-    }
-  ],
-  "item": [
-    {
-      "name": "Health",
-      "item": [
-        {
-          "name": "GET /health",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{base_url}}/health",
-              "host": ["{{base_url}}"],
-              "path": ["health"]
-            },
-            "description": "Check if the server is running and the database is reachable.\n\nExpected response:\n{\n  \"status\": \"ok\",\n  \"version\": \"0.1.0\",\n  \"database\": \"connected\"\n}"
-          }
-        }
-      ]
-    }
-  ]
+	"info": {
+		"_postman_id": "e2e30d45-a39c-4f88-857d-4ae7beb62ffd",
+		"name": "Personal Vault",
+		"description": "API collection for the Personal Vault app. Use with the Vault - Local environment",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "50198284"
+	},
+	"item": [
+		{
+			"name": "Health",
+			"item": [
+				{
+					"name": "GET /health",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "1 — Create user",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "2 — Get user",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Notes API",
+			"item": [
+				{
+					"name": "Create Notes",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "Get notes (user)",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/notes?user_id=2",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"notes"
+							],
+							"query": [
+								{
+									"key": "user_id",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Notes (id)",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "Update Notes",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Notes",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Passwords",
+			"item": [
+				{
+					"name": "1 — Store a password",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "2 — List passwords",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "3 — Get single entry WITH decrypted value",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "4 — Update a password entry",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n      \"label\": \"GitHub (personal)\"\n  }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/passwords/2",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"passwords",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5 — Delete a password entry",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		}
+	]
 }
