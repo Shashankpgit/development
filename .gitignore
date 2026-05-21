@@ -1,0 +1,28 @@
+# Environment
+.env
+vault/.env
+vault/.venv/
+vault/venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Database (local dev only)
+vault/vault.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
