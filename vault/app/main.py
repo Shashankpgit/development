@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from app.config import APP_ENV
 from app.routers import health
 from app.routers import users
@@ -16,6 +18,13 @@ app.include_router(health.router)
 app.include_router(users.router)
 app.include_router(notes.router)
 app.include_router(passwords.router)
+
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+
+@app.get("/")
+def serve_index():
+    return FileResponse("frontend/index.html")
 
 
 @app.on_event("startup")
