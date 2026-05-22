@@ -1,0 +1,2 @@
+1. future make sure build a simple functionality which will use things like async, await and to understand . if see how it will work without this then how this keywords will help.
+2. Even for the cors do this kind of thing.
