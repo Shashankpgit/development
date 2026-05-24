@@ -1,0 +1,179 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #f0f2f5;
+  color: #333;
+  min-height: 100vh;
+}
+
+/* ── Header ──────────────────────────────── */
+.header {
+  background: #1a1a2e;
+  color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header h1 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.header-badge {
+  background: #e94560;
+  color: white;
+  font-size: 0.65rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* ── Layout ──────────────────────────────── */
+.container {
+  max-width: 900px;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.container .full-width {
+  grid-column: 1 / -1;
+}
+
+/* ── Card ────────────────────────────────── */
+.card {
+  background: white;
+  border-radius: 10px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.card h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* ── Buttons ─────────────────────────────── */
+.btn {
+  padding: 0.5rem 1.1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: opacity 0.15s;
+}
+
+.btn:hover { opacity: 0.85; }
+
+.btn-primary {
+  background: #1a1a2e;
+  color: white;
+}
+
+.btn-danger {
+  background: #e94560;
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.65rem;
+}
+
+/* ── Form inputs ─────────────────────────── */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.input {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #1a1a2e;
+}
+
+/* ── Health check ────────────────────────── */
+.health-result {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: #555;
+  display: flex;
+  gap: 1rem;
+}
+
+.health-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.health-pill.ok     { background: #d1fae5; color: #065f46; }
+.health-pill.error  { background: #fee2e2; color: #991b1b; }
+
+/* ── Note list ───────────────────────────── */
+.note-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.empty-state {
+  color: #aaa;
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+/* ── Note card ───────────────────────────── */
+.note-card {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.note-card:last-child { border-bottom: none; }
+
+.note-card-content { flex: 1; }
+
+.note-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 0.2rem;
+}
+
+.note-body {
+  font-size: 0.8rem;
+  color: #777;
+}
