@@ -66,6 +66,14 @@ VAULT_ENCRYPTION_KEY=<output of second command>
 CORS_ORIGINS=http://localhost:5173
 ```
 
+### Docker Compose env (for running with docker-compose)
+
+```bash
+cd development/vault
+cp .env.example .env
+# values are already filled — change only if you want different credentials
+```
+
 ### Frontend
 
 ```bash
@@ -171,7 +179,7 @@ npm install
 
 ## Current phase
 
-**Phase 5 complete** — service layer + repository pattern. Backend is fully layered: router → service → repository → database.
+**Phase 6 complete** — backend and PostgreSQL containerized with Docker. Run the full stack with `docker-compose up --build` from `vault/`.
 
 See `docs/` for planning documents and KT notes.
 See `docs/api/` for API reference.
