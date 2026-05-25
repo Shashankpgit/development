@@ -1,6 +1,4 @@
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import APP_ENV, CORS_ORIGINS
 from app.routers import health
@@ -29,13 +27,6 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(notes.router)
 app.include_router(passwords.router)
-
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
-
-
-@app.get("/")
-def serve_index():
-    return FileResponse("frontend/index.html")
 
 
 @app.on_event("startup")

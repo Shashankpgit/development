@@ -62,7 +62,7 @@ class UserRepository:
 
 - **Repository pattern**: An abstraction layer between business logic and data storage. The service asks "give me note with id=5" — the repository knows HOW to get it (SQL, file, cache, etc.).
 
-- **Why swap-ability matters**: You might start with SQLite, move to PostgreSQL, later add Redis cache on top. If your services talk to a repository interface, swapping the implementation is isolated.
+- **Why swap-ability matters**: You use PostgreSQL now, but later you might add a Redis cache layer on top, or switch to a different ORM. If your services talk to a repository interface, swapping the implementation is isolated — the service doesn't need to change at all.
 
 - **Dependency injection for repositories**: Services receive `NoteRepository` from outside (via `Depends()`), not create it internally. This is the same principle as receiving `db` session via Depends().
 

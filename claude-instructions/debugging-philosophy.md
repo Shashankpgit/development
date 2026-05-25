@@ -15,9 +15,9 @@ Walk through the error message word by word. Most engineers (especially beginner
 
 Example:
 ```
-sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: notes
+sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedTable) relation "notes" does not exist
 ```
-Before fixing: "Let's read this carefully. `OperationalError` — something went wrong at the database operation level. `no such table: notes` — the database doesn't have a table called `notes`. Why? Let's find out."
+Before fixing: "Let's read this carefully. `ProgrammingError` — something went wrong at the SQL level. `relation "notes" does not exist` — the database doesn't have a table called `notes`. Why? Let's find out."
 
 ### 2. Identify the layer
 Which layer is failing?
@@ -66,8 +66,8 @@ The user will be told: **"This is a deliberate mistake — let's debug it."**
 **Lesson**: FastAPI router registration, difference between "file exists" and "route is registered"
 
 ### Phase 1 — Database
-**Mistake**: Wrong `DATABASE_URL` format (e.g., `sqlite://vault.db` instead of `sqlite:///./vault.db`).
-**Error**: `sqlalchemy.exc.ArgumentError: Could not parse rfc1738 URL from string 'sqlite://vault.db'`
+**Mistake**: Wrong `DATABASE_URL` format (e.g., `postgresql://localhost/vault` instead of `postgresql://user:pass@localhost:5432/vault`).
+**Error**: `sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server failed: FATAL: password authentication failed`
 **Lesson**: Connection strings, how to read SQLAlchemy errors, URL format rules
 
 ### Phase 2 — Models
@@ -131,9 +131,9 @@ ps aux | grep uvicorn
 # Check if port is in use
 lsof -i :8000
 
-# Inspect SQLite database directly
-sqlite3 vault.db ".tables"
-sqlite3 vault.db "SELECT * FROM users;"
+# Inspect PostgreSQL database directly
+psql $DATABASE_URL -c "\dt"
+psql $DATABASE_URL -c "SELECT * FROM users;"
 
 # Check if env var is loaded
 python -c "from app.config import settings; print(settings.database_url)"

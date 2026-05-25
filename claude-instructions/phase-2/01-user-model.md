@@ -57,9 +57,9 @@ class User:
 ## Important teaching moment
 
 Show the user:
-1. After `POST /users`, open `sqlite3 vault.db` and run `SELECT * FROM users;`
+1. After `POST /users`, run `psql $DATABASE_URL -c "SELECT * FROM users;"`
 2. See the row appear in the database
-3. Connect this to: "your API call → SQLAlchemy → SQL → database file on disk"
+3. Connect this to: "your API call → SQLAlchemy → SQL → PostgreSQL"
 
 This is the first time they see the full chain working end-to-end.
 
@@ -91,6 +91,6 @@ This is the first time they see the full chain working end-to-end.
 ```bash
 # POST /users with {"username": "bob", "password": "secret123"}
 # Returns {"id": 1, "username": "bob", "created_at": "..."}
-# sqlite3 vault.db: SELECT * FROM users; → shows the row
+# psql $DATABASE_URL -c "SELECT * FROM users;" → shows the row
 # hashed_password is NOT in the response
 ```

@@ -104,7 +104,7 @@ class PasswordEntry:
 ## Success criteria
 
 1. `POST /passwords` with `{"user_id": 1, "label": "GitHub", "username": "bob", "value": "mysecret"}` → stores encrypted value in DB
-2. Open `sqlite3 vault.db`: `SELECT * FROM password_entries;` → `encrypted_value` column shows gibberish (cipher text), NOT "mysecret"
+2. Run `psql $DATABASE_URL -c "SELECT * FROM password_entries;"` → `encrypted_value` column shows gibberish (cipher text), NOT "mysecret"
 3. `GET /passwords/1` → response includes `"value": "mysecret"` (decrypted)
 4. `GET /passwords?user_id=1` → response does NOT include `value` field
 5. `DELETE /passwords/1` → gone

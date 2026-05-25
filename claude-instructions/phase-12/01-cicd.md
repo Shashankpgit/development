@@ -126,7 +126,7 @@ jobs:
 Teach pytest basics during this step:
 - `pytest` discovers test files matching `test_*.py`
 - Use `TestClient` from FastAPI to test endpoints without running a server
-- Use a SQLite in-memory database for test isolation
+- Use a PostgreSQL test database (spin up via GitHub Actions `services` block) for test isolation
 
 Basic structure:
 ```python

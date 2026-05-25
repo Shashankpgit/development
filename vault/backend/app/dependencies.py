@@ -5,6 +5,7 @@ from jose import JWTError
 from app.database import get_db
 from app.models.user import User
 from app.utils.auth import decode_token
+from app.repositories import user_repository
 
 bearer_scheme = HTTPBearer()
 
@@ -18,7 +19,7 @@ def get_current_user(
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-    user = db.query(User).filter(User.id == user_id).first()
+    user = user_repository.get_by_id(db, user_id)
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     return user

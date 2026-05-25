@@ -1,17 +1,14 @@
 # Environment
 .env
-vault/.env
-vault/.venv/
-vault/venv/
+vault/backend/.env
+vault/backend/.venv/
+vault/backend/venv/
 
 # Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-
-# Database (local dev only)
-vault/vault.db
 
 # IDE
 .vscode/

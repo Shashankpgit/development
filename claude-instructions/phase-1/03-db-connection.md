@@ -1,7 +1,7 @@
 # Phase 1 — Step 3: Database Connection
 
 ## What this step covers
-Connect the application to SQLite using SQLAlchemy. Verify the connection. No tables yet — just the connection layer.
+Connect the application to PostgreSQL using SQLAlchemy. Verify the connection. No tables yet — just the connection layer.
 
 ---
 
@@ -16,7 +16,7 @@ Connect the application to SQLite using SQLAlchemy. Verify the connection. No ta
 
 Connecting to a database and verifying the connection is a separate concern from defining tables or writing queries. Real engineering teams always establish the connection layer first, then build on top of it. This step:
 - Creates the database session factory that every route will use later
-- Confirms the database file is created and accessible
+- Confirms the database is reachable and accessible
 - Introduces SQLAlchemy's session concept (the thing that wraps every DB operation)
 
 Without this step working cleanly, adding models (Step 2.x) will fail in hard-to-debug ways.
@@ -26,7 +26,7 @@ Without this step working cleanly, adding models (Step 2.x) will fail in hard-to
 ## What to implement
 
 ### `app/database.py`
-- Create SQLAlchemy engine pointing to `vault.db` (SQLite)
+- Create SQLAlchemy engine pointing to PostgreSQL via `DATABASE_URL`
 - Create `SessionLocal` — the session factory
 - Create `Base` — the declarative base for all models
 - Create `get_db()` — a FastAPI dependency that yields a DB session per request
@@ -35,7 +35,7 @@ Without this step working cleanly, adding models (Step 2.x) will fail in hard-to
 - On startup, call `Base.metadata.create_all(bind=engine)` (for now; Alembic replaces this in Phase 5)
 
 ### `.env` update
-- Add `DATABASE_URL=sqlite:///./vault.db`
+- Add `DATABASE_URL=postgresql://user:password@localhost:5432/vault`
 
 ### Verify endpoint: `GET /health` update
 - Return `"database": "connected"` if DB session opens successfully
@@ -45,8 +45,8 @@ Without this step working cleanly, adding models (Step 2.x) will fail in hard-to
 ## Concepts to teach during this step
 
 - **ORM (Object-Relational Mapper)**: What SQLAlchemy is — you write Python objects, it writes SQL
-- **Connection string / DATABASE_URL**: The format `dialect://user:pass@host/dbname` — explain each part
-- **SQLite vs PostgreSQL**: Why SQLite is great for learning (file-based, zero setup), and why we'll migrate to PostgreSQL before going to production
+- **Connection string / DATABASE_URL**: The format `dialect://user:pass@host:port/dbname` — explain each part
+- **PostgreSQL**: Why we use a real database from the start instead of a file-based one. Production systems need proper concurrent access, transactions, and constraints.
 - **Engine vs Session**: Engine = the connection pool (long-lived). Session = one "conversation" with the DB (short-lived, one per request)
 - **`get_db()` dependency**: How FastAPI's dependency injection works — the `yield` pattern
 - **`Base.metadata.create_all()`**: What this does (creates tables if they don't exist) and why it's a development shortcut (Alembic is the real answer)
@@ -57,9 +57,9 @@ Without this step working cleanly, adding models (Step 2.x) will fail in hard-to
 ## Show in action (teach this)
 
 After implementation, demonstrate:
-1. The `vault.db` file appears in the project root
-2. Health endpoint returns `"database": "connected"`
-3. Open `vault.db` with `sqlite3 vault.db` or a GUI tool — show it's empty but real
+1. Health endpoint returns `"database": "connected"`
+2. Show tables using psql: `\dt` — empty but the connection works
+3. Connect this to: "your API call → SQLAlchemy → SQL → PostgreSQL"
 
 ---
 
@@ -67,8 +67,7 @@ After implementation, demonstrate:
 
 - Do NOT create any model classes yet (that's Phase 2 Step 1)
 - Do NOT write any queries yet
-- Do NOT switch to PostgreSQL yet (that comes in Phase 4 when Docker arrives)
-- Do NOT add database migrations (Alembic comes in Phase 5)
+- Do NOT add database migrations (Alembic comes in a future phase)
 
 ---
 
@@ -87,9 +86,9 @@ After implementation, demonstrate:
 ## Success criteria
 
 ```bash
+# Start PostgreSQL (docker run postgres or local install)
 uvicorn app.main:app --reload
-# vault.db file appears in project root
 # GET /health returns {"status": "ok", "version": "1.0.0", "database": "connected"}
 ```
 
-Git: commit with message "feat: connect SQLite database via SQLAlchemy"
+Git: commit with message "feat: connect PostgreSQL database via SQLAlchemy"

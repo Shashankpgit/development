@@ -25,9 +25,9 @@ Think of it as a personal, self-hosted combination of Bitwarden (password manage
 
 | Version | Scope | Phases |
 |---|---|---|
-| v1 | API only, SQLite, no authentication | Phase 1–2 |
-| v2 | Authentication added, multi-user, PostgreSQL | Phase 3–4 |
-| v3 | Minimal frontend, DevTools learning | Phase 3 |
+| v1 | API only, PostgreSQL, no authentication | Phase 1–2 |
+| v2 | Authentication added, multi-user | Phase 4 |
+| v3 | React frontend, DevTools learning | Phase 3 |
 | v4 | Architecture refactor (service + repo layers) | Phase 5 |
 | v5 | Containerized, Dockerized | Phase 6 |
 | v6 | Nginx reverse proxy | Phase 7 |
@@ -46,9 +46,8 @@ Think of it as a personal, self-hosted combination of Bitwarden (password manage
 |---|---|---|
 | Language | Python 3.11+ | User has prior Python knowledge |
 | API Framework | FastAPI | User knows basics; auto-docs at /docs; async |
-| Database (v1) | SQLite | Zero setup; perfect for learning |
-| Database (v2+) | PostgreSQL | Production-grade; migrate before Docker |
-| ORM | SQLAlchemy 2.x | Industry standard; works with both DBs |
+| Database | PostgreSQL | Production-grade from Phase 1; no SQLite |
+| ORM | SQLAlchemy 2.x | Industry standard |
 | Migrations | Alembic | Tracks schema changes like git does for code |
 | Auth | Custom JWT first, then Keycloak | Learn JWT internals before enterprise SSO |
 | Frontend | Plain HTML + vanilla JS (no framework) | Learn fundamentals before React |
@@ -119,7 +118,7 @@ If the user says "I don't understand" or "create KT document" — immediately cr
 
 ---
 
-## Folder Structure (target for v1)
+## Folder Structure
 
 ```
 development/                     ← git repo root
@@ -128,23 +127,33 @@ development/                     ← git repo root
 ├── goal.md                      ← learning goals and mentorship rules
 ├── README.md
 ├── .gitignore
-└── vault/                       ← the actual application lives here
-    ├── app/
-    │   ├── main.py              ← FastAPI app entry point
-    │   ├── config.py            ← environment + settings
-    │   ├── database.py          ← DB engine + session setup
-    │   ├── models/              ← SQLAlchemy ORM models
-    │   ├── schemas/             ← Pydantic request/response schemas
-    │   ├── routers/             ← FastAPI route handlers
-    │   ├── services/            ← business logic (added in Phase 5)
-    │   └── repositories/        ← DB access layer (added in Phase 5)
-    ├── tests/                   ← pytest tests
-    ├── .env                     ← local environment variables (gitignored)
-    ├── .env.example             ← committed template of env vars
-    └── requirements.txt
+└── vault/                       ← the application lives here
+    ├── backend/                 ← FastAPI backend (Python)
+    │   ├── app/
+    │   │   ├── main.py          ← FastAPI app entry point
+    │   │   ├── config.py        ← environment + settings
+    │   │   ├── database.py      ← DB engine + session setup
+    │   │   ├── models/          ← SQLAlchemy ORM models
+    │   │   ├── schemas/         ← Pydantic request/response schemas
+    │   │   ├── routers/         ← FastAPI route handlers
+    │   │   ├── services/        ← business logic (Phase 5+)
+    │   │   └── repositories/    ← DB access layer (Phase 5+)
+    │   ├── tests/               ← pytest tests
+    │   ├── .env                 ← local env vars (gitignored)
+    │   ├── .env.example         ← committed env template
+    │   └── requirements.txt
+    └── frontend/                ← React + Vite frontend
+        ├── src/
+        │   ├── components/      ← React components
+        │   ├── context/         ← React Context (AuthContext)
+        │   ├── App.jsx
+        │   └── main.jsx
+        ├── .env                 ← frontend env vars (gitignored)
+        ├── .env.example
+        └── package.json
 ```
 
-**Rule:** All application code lives inside `vault/`. All docs, plans, and Claude instructions live at the repo root level. Never mix them.
+**Rule:** Backend code lives in `vault/backend/`. Frontend code lives in `vault/frontend/`. Docs and Claude instructions live at the repo root level. Never mix them.
 
 ---
 

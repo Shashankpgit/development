@@ -106,7 +106,7 @@ Go to https://jwt.io with the user:
 ## Success criteria
 
 1. `POST /auth/register` with `{"username": "bob", "password": "secret"}` → creates user with hashed password
-2. `sqlite3 vault.db`: `SELECT hashed_password FROM users;` → shows bcrypt hash, NOT "secret"
+2. `psql $DATABASE_URL -c "SELECT hashed_password FROM users;"` → shows bcrypt hash, NOT "secret"
 3. `POST /auth/login` with correct credentials → returns `{"access_token": "eyJ...", "token_type": "bearer"}`
 4. `POST /auth/login` with wrong password → returns 401 Unauthorized
 5. Paste token into jwt.io → see `{"sub": "bob", "exp": ...}` in payload

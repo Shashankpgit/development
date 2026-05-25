@@ -9,7 +9,9 @@ Built progressively across 13 phases as a full-stack learning project.
 
 ```
 development/
-├── vault/                  ← application code
+├── vault/
+│   ├── backend/            ← FastAPI backend (Python)
+│   └── frontend/           ← React + Vite frontend
 ├── docs/                   ← planning docs, KT docs, API reference
 ├── claude-instructions/    ← phase-by-phase implementation playbooks
 └── README.md               ← this file
@@ -20,28 +22,67 @@ development/
 ## Prerequisites
 
 - Python 3.11+
+- Node.js 18+
 - Docker (for PostgreSQL)
 
 ---
 
 ## First-time setup
 
+### Backend
+
 ```bash
-# 1. Clone and enter the repo
-cd development/vault
+# 1. Enter the backend directory
+cd development/vault/backend
 
 # 2. Create and activate the virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
 
 # 3. Install dependencies
-pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 
-# 4. Copy the environment file and fill in your values
+# 4. Copy the environment file
 cp .env.example .env
-# edit .env with your credentials
+```
 
-# 5. Start the PostgreSQL container
+Now generate the required secret values and paste them into `.env`:
+
+```bash
+# Generate SECRET_KEY (used to sign JWT tokens)
+python3 -c "import secrets; print(secrets.token_hex(32))"
+
+# Generate VAULT_ENCRYPTION_KEY (used to encrypt stored passwords)
+python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
+
+Your `.env` should look like this when filled in:
+
+```
+APP_ENV=development
+DATABASE_URL=postgresql://vault_user:vault_pass@localhost:5432/vault
+SECRET_KEY=<output of first command>
+VAULT_ENCRYPTION_KEY=<output of second command>
+CORS_ORIGINS=http://localhost:5173
+```
+
+### Frontend
+
+```bash
+# 1. Enter the frontend directory
+cd development/vault/frontend
+
+# 2. Install dependencies
+npm install
+
+# 3. Copy the environment file
+cp .env.example .env
+# VITE_API_URL=http://localhost:8000
+```
+
+### Database (PostgreSQL via Docker)
+
+```bash
 docker run --name vault-db \
   -e POSTGRES_USER=vault_user \
   -e POSTGRES_PASSWORD=vault_pass \
@@ -60,12 +101,14 @@ Every time you start working on the project:
 # 1. Start the database (if not already running)
 docker start vault-db
 
-# 2. Activate the virtual environment
-cd vault
+# 2. Start the backend
+cd vault/backend
 source .venv/bin/activate
+python3 -m uvicorn app.main:app --reload
 
-# 3. Start the server
-uvicorn app.main:app --reload
+# 3. In a separate terminal — start the frontend
+cd vault/frontend
+npm run dev
 ```
 
 ---
@@ -73,7 +116,10 @@ uvicorn app.main:app --reload
 ## Stopping everything
 
 ```bash
-# Stop the server
+# Stop the backend server
+Ctrl+C
+
+# Stop the frontend dev server
 Ctrl+C
 
 # Stop the database container (data is preserved)
@@ -82,10 +128,11 @@ docker stop vault-db
 
 ---
 
-## Useful URLs (while server is running)
+## Useful URLs (while everything is running)
 
 | URL | What it is |
 |---|---|
+| `http://localhost:5173` | React frontend (Vite dev server) |
 | `http://localhost:8000/health` | Health check — confirms server + DB are up |
 | `http://localhost:8000/docs` | Swagger UI — interactive API explorer |
 | `http://localhost:8000/redoc` | ReDoc — alternative API documentation |
@@ -115,13 +162,16 @@ pip list
 
 # Install new dependencies after pulling changes
 pip install -r requirements.txt
+
+# Install new frontend dependencies after pulling changes
+npm install
 ```
 
 ---
 
 ## Current phase
 
-**Phase 1 complete** — project setup, first API endpoint, PostgreSQL connection.
+**Phase 5 complete** — service layer + repository pattern. Backend is fully layered: router → service → repository → database.
 
 See `docs/` for planning documents and KT notes.
 See `docs/api/` for API reference.
