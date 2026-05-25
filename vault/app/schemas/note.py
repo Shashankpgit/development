@@ -4,7 +4,6 @@ from datetime import datetime
 
 
 class NoteCreate(BaseModel):
-    user_id: int
     title: str
     body: Optional[str] = None
 

@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 function NoteForm({ onNoteAdded }) {
+  const { token } = useAuth();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
 
@@ -11,8 +13,11 @@ function NoteForm({ onNoteAdded }) {
 
     await fetch(`${API_URL}/notes`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: 1, title, body }),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ title, body }),
     });
 
     setTitle('');

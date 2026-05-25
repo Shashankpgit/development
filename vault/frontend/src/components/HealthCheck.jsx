@@ -1,12 +1,16 @@
 import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 function HealthCheck() {
+  const { token } = useAuth();
   const [status, setStatus] = useState(null);
 
   async function checkHealth() {
-    const response = await fetch(`${API_URL}/health`);
+    const response = await fetch(`${API_URL}/health`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     const data = await response.json();
     setStatus(data);
   }

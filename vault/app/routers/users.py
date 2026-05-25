@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse
+from app.utils.auth import hash_password
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -13,8 +14,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="Username already taken")
 
-    # TODO Phase 4: replace with hashed password using bcrypt
-    db_user = User(username=user.username, hashed_password=user.password)
+    db_user = User(username=user.username, hashed_password=hash_password(user.password))
     db.add(db_user)
     db.commit()
     db.refresh(db_user)

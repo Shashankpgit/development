@@ -4,7 +4,6 @@ from datetime import datetime
 
 
 class PasswordEntryCreate(BaseModel):
-    user_id: int
     label: str
     username: str
     value: str

@@ -1,8 +1,15 @@
+import { useAuth } from '../context/AuthContext';
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 function NoteCard({ note, onDelete }) {
+  const { token } = useAuth();
+
   async function handleDelete() {
-    await fetch(`${API_URL}/notes/${note.id}`, { method: 'DELETE' });
+    await fetch(`${API_URL}/notes/${note.id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
     onDelete();
   }
 

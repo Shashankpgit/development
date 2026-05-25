@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
 import NoteCard from './NoteCard';
+import { useAuth } from '../context/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 function NoteList({ refreshTrigger, onNoteDeleted }) {
+  const { token } = useAuth();
   const [notes, setNotes] = useState([]);
 
   useEffect(() => {
-    fetch(`${API_URL}/notes?user_id=1`)
+    fetch(`${API_URL}/notes`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
       .then(res => res.json())
       .then(data => setNotes(data));
   }, [refreshTrigger]);
