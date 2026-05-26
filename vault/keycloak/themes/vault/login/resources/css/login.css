@@ -1,0 +1,117 @@
+body,
+.login-pf-page {
+  background: #f0f2f5 !important;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+#kc-header-wrapper {
+  display: none;
+}
+
+.login-pf-page .login-pf-header h1,
+#kc-page-title {
+  color: #1a1a2e;
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* card */
+.card-pf {
+  background: #ffffff;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  max-width: 420px;
+  margin: auto;
+}
+
+/* inputs */
+.pf-c-form-control,
+#username,
+#password,
+#firstName,
+#lastName,
+#email,
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: #fafafa;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.pf-c-form-control:focus,
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus {
+  border-color: #1a1a2e;
+  outline: none;
+  background: #fff;
+}
+
+/* primary button */
+.pf-c-button.pf-m-primary,
+input[type="submit"],
+#kc-login,
+#kc-register {
+  width: 100%;
+  background: #1a1a2e !important;
+  color: #ffffff !important;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.pf-c-button.pf-m-primary:hover,
+input[type="submit"]:hover {
+  opacity: 0.85;
+}
+
+/* links */
+a,
+#kc-registration a,
+#kc-form-login a {
+  color: #e94560;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* labels */
+label {
+  color: #444;
+  font-size: 0.88rem;
+  font-weight: 500;
+  margin-bottom: 0.3rem;
+  display: block;
+}
+
+/* alert/error */
+.alert-error,
+.pf-c-alert.pf-m-danger {
+  background: #fff1f2;
+  border-left: 4px solid #e94560;
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.88rem;
+  color: #c0392b;
+  margin-bottom: 1rem;
+}
+
+/* spacing */
+.pf-c-form__group {
+  margin-bottom: 1rem;
+}

@@ -33,6 +33,7 @@ Think of it as a personal, self-hosted combination of Bitwarden (password manage
 | v6 | Nginx reverse proxy | Phase 7 |
 | v7 | Kong API gateway | Phase 8 |
 | v8 | Keycloak SSO replaces custom JWT | Phase 9 |
+| v8.5 | VM deployment + real domain + HTTPS | Phase 9.5 |
 | v9 | Kubernetes deployment | Phase 10 |
 | v10 | Helm charts | Phase 11 |
 | v11 | CI/CD pipeline | Phase 12 |
@@ -71,6 +72,7 @@ Phase 6  → Docker + docker-compose
 Phase 7  → Nginx reverse proxy
 Phase 8  → Kong API gateway
 Phase 9  → Keycloak (replace custom JWT)
+Phase 9.5→ VM deployment + real domain + HTTPS (Let's Encrypt)
 Phase 10 → Kubernetes (pods, deployments, services)
 Phase 11 → Helm charts
 Phase 12 → GitHub Actions CI/CD
