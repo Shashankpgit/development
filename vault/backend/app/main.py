@@ -1,6 +1,5 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from app.config import APP_ENV, CORS_ORIGINS
+from app.config import APP_ENV
 from app.routers import health
 from app.routers import users
 from app.routers import notes
@@ -12,14 +11,6 @@ app = FastAPI(
     title="Personal Vault",
     description="A private storage app for notes and passwords",
     version="0.1.0",
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
 )
 
 app.include_router(health.router)
