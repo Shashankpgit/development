@@ -23,3 +23,6 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Helm secrets — never commit
+vault-automation/global-secrets.yaml
