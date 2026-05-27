@@ -56,7 +56,14 @@ jobs:
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "Image will be tagged as: ${TAG}"
 
-      # Step 3: Log into GitHub Container Registry
+      # Step 3: Lowercase the repository owner
+      # GHCR requires all image names to be lowercase
+      # github.repository_owner may have uppercase letters (e.g. ShashankPgit)
+      - name: Set lowercase owner
+        id: owner
+        run: echo "value=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      # Step 4: Log into GitHub Container Registry
       # GITHUB_TOKEN is automatic — GitHub creates it for every workflow run
       # It has permission to push packages for this repo without any manual setup
       - name: Login to GitHub Container Registry
@@ -66,13 +73,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 4: Set up Docker Buildx (enables multi-platform builds + better caching)
+      # Step 5: Set up Docker Buildx (enables multi-platform builds + better caching)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Step 5: Build the backend Docker image and push to GHCR
-      # context: the directory sent to Docker as the build context
-      # tags: we push two tags — the specific version tag + "latest"
+      # Step 6: Build the backend Docker image and push to GHCR
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
@@ -80,15 +85,14 @@ jobs:
           file: ./vault/backend/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/vault-api:${{ steps.tag.outputs.tag }}
-            ghcr.io/${{ github.repository_owner }}/vault-api:latest
-          # Cache layers from the previous build to speed up future builds
+            ghcr.io/${{ steps.owner.outputs.value }}/vault-api:${{ steps.tag.outputs.tag }}
+            ghcr.io/${{ steps.owner.outputs.value }}/vault-api:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Step 6: Print a summary so it's easy to see what was pushed
+      # Step 7: Print a summary so it's easy to see what was pushed
       - name: Print image details
         run: |
           echo "✅ Image pushed successfully"
-          echo "📦 ghcr.io/${{ github.repository_owner }}/vault-api:${{ steps.tag.outputs.tag }}"
-          echo "📦 ghcr.io/${{ github.repository_owner }}/vault-api:latest"
+          echo "📦 ghcr.io/${{ steps.owner.outputs.value }}/vault-api:${{ steps.tag.outputs.tag }}"
+          echo "📦 ghcr.io/${{ steps.owner.outputs.value }}/vault-api:latest"
