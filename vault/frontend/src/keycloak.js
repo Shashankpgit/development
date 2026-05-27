@@ -1,4 +1,4 @@
-const KEYCLOAK_URL = 'http://localhost:8080';
+const KEYCLOAK_URL = import.meta.env.VITE_KEYCLOAK_URL;
 const REALM = 'vault';
 const CLIENT_ID = 'vault-frontend';
 const REDIRECT_URI = window.location.origin;

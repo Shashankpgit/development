@@ -830,10 +830,12 @@
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "http://localhost/*"
+        "http://localhost/*",
+        "https://vaultpraja.duckdns.org/*"
       ],
       "webOrigins": [
-        "http://localhost"
+        "http://localhost",
+        "https://vaultpraja.duckdns.org"
       ],
       "notBefore": 0,
       "bearerOnly": false,

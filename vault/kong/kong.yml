@@ -24,6 +24,18 @@ consumers:
           OaQ4PdBmR2MHC2bBpJNl52QNOn9s6vBIHw06wKDELyl3LPzo3EBKDfhA/NY/xoM+
           qwIDAQAB
           -----END PUBLIC KEY-----
+      - key: https://vaultpraja.duckdns.org/realms/vault
+        algorithm: RS256
+        rsa_public_key: |
+          -----BEGIN PUBLIC KEY-----
+          MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqCoUkhyToUTyn0IXip7z
+          0NM2cDSdw8Cjj8zBmNAo1HkByk8n7Q5EgpFZhehMjtLhPs6VNg+RdFK9S3EyN00N
+          +SG2R3Llj49HzE1q4P1tP25dM+7lM5rwSdkujOSDAVFfTdUIDWIFK6hU6JErxlWA
+          7TQBpCApOne9goNSZTxWG5vUlLcV30N3LUDzYNj7n7x7NTpUZDHoZP0660EDd2kP
+          s2UVuXqb4i3DC6a8BHALCxExwXzGZ6J1Il0Mjqvijp0jVVsFmp9tBjvjfwL4sEfN
+          OaQ4PdBmR2MHC2bBpJNl52QNOn9s6vBIHw06wKDELyl3LPzo3EBKDfhA/NY/xoM+
+          qwIDAQAB
+          -----END PUBLIC KEY-----
 
 plugins:
   - name: rate-limiting
@@ -35,6 +47,7 @@ plugins:
     config:
       origins:
         - http://localhost
+        - https://vaultpraja.duckdns.org
       methods:
         - GET
         - POST

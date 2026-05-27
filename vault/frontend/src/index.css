@@ -6,25 +6,27 @@
 
 body {
   font-family: 'Segoe UI', system-ui, sans-serif;
-  background: #f0f2f5;
-  color: #333;
+  background: #0d0d0d;
+  color: #e0e0e0;
   min-height: 100vh;
 }
 
 /* ── Header ──────────────────────────────── */
 .header {
-  background: #1a1a2e;
-  color: white;
+  background: #111111;
+  color: #f0f0f0;
   padding: 1rem 2rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  border-bottom: 1px solid #222;
 }
 
 .header h1 {
   font-size: 1.4rem;
   font-weight: 600;
   letter-spacing: 0.5px;
+  color: #f0f0f0;
 }
 
 .header-badge {
@@ -54,19 +56,20 @@ body {
 
 /* ── Card ────────────────────────────────── */
 .card {
-  background: white;
+  background: #1a1a1a;
   border-radius: 10px;
   padding: 1.25rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.4);
+  border: 1px solid #2a2a2a;
 }
 
 .card h2 {
   font-size: 1rem;
   font-weight: 600;
-  color: #444;
+  color: #aaa;
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #2a2a2a;
 }
 
 /* ── Buttons ─────────────────────────────── */
@@ -80,18 +83,24 @@ body {
   transition: opacity 0.15s;
 }
 
-.btn:hover { opacity: 0.85; }
+.btn:hover { opacity: 0.8; }
 
 .btn-primary {
-  background: #1a1a2e;
+  background: #e94560;
   color: white;
 }
 
 .btn-danger {
-  background: #e94560;
-  color: white;
+  background: #3a1a1f;
+  color: #e94560;
+  border: 1px solid #e94560;
   font-size: 0.75rem;
   padding: 0.25rem 0.65rem;
+}
+
+.btn-danger:hover {
+  background: #e94560;
+  color: white;
 }
 
 /* ── Form inputs ─────────────────────────── */
@@ -103,24 +112,31 @@ body {
 
 .input {
   padding: 0.55rem 0.75rem;
-  border: 1px solid #ddd;
+  border: 1px solid #333;
   border-radius: 6px;
   font-size: 0.9rem;
   font-family: inherit;
   transition: border-color 0.15s;
   width: 100%;
+  background: #111;
+  color: #e0e0e0;
+}
+
+.input::placeholder {
+  color: #555;
 }
 
 .input:focus {
   outline: none;
-  border-color: #1a1a2e;
+  border-color: #e94560;
+  background: #161616;
 }
 
 /* ── Health check ────────────────────────── */
 .health-result {
   margin-top: 0.75rem;
   font-size: 0.875rem;
-  color: #555;
+  color: #888;
   display: flex;
   gap: 1rem;
 }
@@ -135,8 +151,8 @@ body {
   font-weight: 500;
 }
 
-.health-pill.ok     { background: #d1fae5; color: #065f46; }
-.health-pill.error  { background: #fee2e2; color: #991b1b; }
+.health-pill.ok    { background: #0d2e1f; color: #34d399; }
+.health-pill.error { background: #2e0d0d; color: #f87171; }
 
 /* ── Note list ───────────────────────────── */
 .note-list {
@@ -146,7 +162,7 @@ body {
 }
 
 .empty-state {
-  color: #aaa;
+  color: #555;
   font-size: 0.875rem;
   text-align: center;
   padding: 1rem 0;
@@ -155,7 +171,7 @@ body {
 /* ── Note card ───────────────────────────── */
 .note-card {
   padding: 0.75rem 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #222;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -169,11 +185,11 @@ body {
 .note-title {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #222;
+  color: #e0e0e0;
   margin-bottom: 0.2rem;
 }
 
 .note-body {
   font-size: 0.8rem;
-  color: #777;
+  color: #666;
 }

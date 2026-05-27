@@ -1,7 +1,7 @@
 body,
 .login-pf-page {
-  background: #f0f2f5 !important;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #0d0d0d !important;
+  font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
 #kc-header-wrapper {
@@ -10,7 +10,7 @@ body,
 
 .login-pf-page .login-pf-header h1,
 #kc-page-title {
-  color: #1a1a2e;
+  color: #e0e0e0;
   font-size: 1.4rem;
   font-weight: 700;
   text-align: center;
@@ -18,10 +18,10 @@ body,
 
 /* card */
 .card-pf {
-  background: #ffffff;
-  border: none;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
   padding: 2rem;
   max-width: 420px;
   margin: auto;
@@ -39,21 +39,28 @@ input[type="password"],
 input[type="email"] {
   width: 100%;
   padding: 0.6rem 0.8rem;
-  border: 1.5px solid #ddd;
+  border: 1px solid #333;
   border-radius: 8px;
   font-size: 0.95rem;
-  background: #fafafa;
+  background: #111;
+  color: #e0e0e0;
   box-sizing: border-box;
   transition: border-color 0.2s;
+}
+
+input[type="text"]::placeholder,
+input[type="password"]::placeholder,
+input[type="email"]::placeholder {
+  color: #555;
 }
 
 .pf-c-form-control:focus,
 input[type="text"]:focus,
 input[type="password"]:focus,
 input[type="email"]:focus {
-  border-color: #1a1a2e;
+  border-color: #e94560;
   outline: none;
-  background: #fff;
+  background: #161616;
 }
 
 /* primary button */
@@ -62,7 +69,7 @@ input[type="submit"],
 #kc-login,
 #kc-register {
   width: 100%;
-  background: #1a1a2e !important;
+  background: #e94560 !important;
   color: #ffffff !important;
   border: none;
   border-radius: 8px;
@@ -92,7 +99,7 @@ a:hover {
 
 /* labels */
 label {
-  color: #444;
+  color: #aaa;
   font-size: 0.88rem;
   font-weight: 500;
   margin-bottom: 0.3rem;
@@ -102,12 +109,12 @@ label {
 /* alert/error */
 .alert-error,
 .pf-c-alert.pf-m-danger {
-  background: #fff1f2;
+  background: #2e0d0d;
   border-left: 4px solid #e94560;
   border-radius: 6px;
   padding: 0.6rem 0.8rem;
   font-size: 0.88rem;
-  color: #c0392b;
+  color: #f87171;
   margin-bottom: 1rem;
 }
 
