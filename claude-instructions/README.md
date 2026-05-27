@@ -71,31 +71,45 @@ The same learn-by-doing philosophy applies. Every DevOps concept is taught by ap
 ### DevOps roadmap
 
 ```
-Phase 10 → K8s concepts + minikube setup (KT only — no app deployment)
-Phase 11 → Container Registry: push images to ghcr.io, tagging strategy
-Phase 12 → Helm charts: write app charts, use community charts for infra
-Phase 13 → Deploy to minikube: full stack locally, HTTP only (no cert-manager)
-Phase 14 → CI/CD: GitHub Actions — test → build → push → helm upgrade
-Phase 15 → Deploy to GKE: production cluster, cert-manager, real TLS, retire VM
-Phase 16 → Monitoring: Prometheus + Grafana + structured logging
+Phase 10 → K8s concepts (KT only — architecture, objects, kubectl basics)
+Phase 11 → GitHub Actions: KT + write workflow to auto-build + push images to GHCR
+Phase 12 → Helm charts: write app charts locally, configure community charts for infra
+Phase 13 → Deploy to GKE: full stack on real cluster with HTTPS via cert-manager
+Phase 14 → CI/CD: extend GitHub Actions to auto-deploy via helm upgrade on push
+Phase 15 → Monitoring: Prometheus + Grafana + structured logging
 ```
 
-### Key principle: community charts for infra, custom charts for your code
+### Key principles
 
-In K8s you don't write PostgreSQL, Keycloak, or Kong manifests from scratch.
-Community Helm charts exist for all of them. You configure via values files.
-You only write charts for your own services (vault-api, vault-frontend).
+**1. All automation lives in `vault-automation/`**
+Never run raw `helm install` or `kubectl apply` commands manually.
+Everything is a file — reviewed, committed, version-controlled.
 
 ```
-helm install postgresql  bitnami/postgresql   ← community chart, you configure
-helm install keycloak    bitnami/keycloak      ← community chart, you configure
-helm install kong        kong/kong             ← community chart, you configure
-helm install vault-api   ./helm/vault-api      ← YOUR chart, you write
-helm install vault-front ./helm/vault-frontend ← YOUR chart, you write
+vault-automation/
+├── helm/vault-api/        ← YOUR chart for FastAPI backend
+├── helm/vault-frontend/   ← YOUR chart for React frontend
+├── helm/vault/            ← umbrella chart (ties everything together)
+├── helm/values/           ← values files for community charts
+└── k8s/                   ← raw K8s manifests (namespace etc.)
 ```
 
-cert-manager + Ingress Controller replace the custom nginx container and certbot.
-These are only needed for GKE (Phase 15) — not for local minikube.
+**2. Community charts for infra, custom charts for your code**
+You don't write PostgreSQL, Keycloak, or Kong manifests from scratch.
+Community Helm charts exist. You configure them via values files in `helm/values/`.
+
+```
+Community charts (configure only):     Your charts (you write):
+  bitnami/postgresql                     vault-automation/helm/vault-api/
+  bitnami/keycloak                       vault-automation/helm/vault-frontend/
+  kong/kong
+  ingress-nginx/ingress-nginx
+  cert-manager/cert-manager
+```
+
+**3. GitHub Actions builds images — you don't build manually**
+Every push to `vault/backend/` or `vault/frontend/` triggers a GitHub Actions workflow
+that builds the Docker image and pushes it to GHCR automatically.
 
 ### DevOps stack being added
 | Tool | Purpose |
