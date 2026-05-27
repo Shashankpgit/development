@@ -9,19 +9,17 @@ on:
         required: true
         type: string
 
-  # Trigger 2: a git tag is pushed (e.g. git tag v1.0.0 && git push origin v1.0.0)
-  # The git tag name becomes the image tag
-  push:
-    tags:
-      - 'v*'           # matches v1.0.0, v2.3.1, v1.0.0-rc1, etc.
-
-  # Trigger 3: code is pushed to the default branch and frontend or nginx files changed
-  # Image tag will be the first 7 characters of the commit SHA
+  # Trigger 2 + 3 combined under one push block (YAML does not allow duplicate keys)
+  # - when a git tag v* is pushed → image tag = git tag name
+  # - when frontend/nginx files change on main → image tag = first 7 chars of commit SHA
+  # Note: paths filter applies to branch pushes only, not tag pushes
   push:
     branches: [main]
+    tags:
+      - 'v*'
     paths:
       - 'vault/frontend/**'
-      - 'vault/nginx/**'     # nginx config is part of the frontend image
+      - 'vault/nginx/**'
 
 # Required permissions for pushing to GitHub Container Registry
 permissions:
