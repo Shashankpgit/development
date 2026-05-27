@@ -107,6 +107,47 @@ The user will be told: **"This is a deliberate mistake — let's debug it."**
 
 ---
 
+---
+
+## Planned deliberate mistakes — DevOps phases
+
+### Phase 10 — K8s Step 1 (Concepts)
+**Mistake**: Use `vault-api:latest` as the image name in deployment.yaml without importing it into k3d.
+**Error**: `ImagePullBackOff` or `ErrImagePull` on `kubectl get pods`
+**Lesson**: K8s clusters have their own image storage. Local Docker images are not automatically available inside k3d. Either import with `k3d image import` or push to a registry.
+
+### Phase 10 — K8s Step 2 (Full Deployment)
+**Mistake**: Use `Deployment` instead of `StatefulSet` for PostgreSQL.
+**Error**: App appears to work, but after `kubectl delete pod vault-db-xxx`, data may be lost or the PVC may not reattach cleanly.
+**Lesson**: Deployment pods are anonymous and interchangeable. StatefulSet pods have stable identity (`postgres-0`) and stable storage binding — required for databases.
+
+### Phase 10 — K8s Step 3 (Ingress + Probes)
+**Mistake**: Set `initialDelaySeconds: 0` on the liveness probe for Keycloak.
+**Error**: `CrashLoopBackOff` — K8s kills Keycloak repeatedly because it fails the liveness check during startup.
+**Lesson**: Health probe timing must match actual startup time. Keycloak takes ~60-90 seconds to start. Aggressive probes on slow-starting services cause restart loops.
+
+### Phase 11 — Helm
+**Mistake**: Run `helm install vault ./helm/vault` twice without checking if a release already exists.
+**Error**: `Error: INSTALLATION FAILED: cannot re-use a name that is still in use`
+**Lesson**: `helm install` fails if a release already exists. Use `helm upgrade --install` instead — it installs if absent, upgrades if present. This is what CI/CD pipelines use.
+
+### Phase 12 — Container Registry
+**Mistake**: Tag the image as `vault-api:latest` (without registry prefix) and try to push to ghcr.io.
+**Error**: `denied: requested access to the resource is denied`
+**Lesson**: Docker uses the image name to determine the registry. `vault-api:latest` tries Docker Hub. `ghcr.io/username/vault-api:latest` targets GitHub. The registry is part of the tag.
+
+### Phase 12 — CI/CD
+**Mistake**: Missing `needs: test` on the `build` job in the GitHub Actions workflow.
+**Error**: The pipeline builds and deploys even when tests fail.
+**Lesson**: GitHub Actions jobs run in parallel by default. `needs: test` makes `build` wait for `test` to succeed. Without it, a broken deploy can ship despite failing tests.
+
+### Phase 13 — Monitoring
+**Mistake**: Configure Prometheus to scrape `localhost:8000/metrics` instead of `api:8000/metrics`.
+**Error**: Prometheus shows `connection refused` for the vault-api target.
+**Lesson**: In K8s, `localhost` means the Prometheus pod itself, not the API. Service names (DNS) must be used for cross-pod communication: `api.vault.svc.cluster.local` or simply `api` within the same namespace.
+
+---
+
 ## How to use DevTools for debugging (reference)
 
 When the error is frontend-side, always open DevTools FIRST:
