@@ -1,11 +1,16 @@
 # manifests/keycloak-realm-configmap.yaml
 # ─────────────────────────────────────────────────────────────────────────────
-# ConfigMap holding the Keycloak vault realm configuration.
-# authenticationFlows and authenticatorConfig are stripped — those are
-# built-in Keycloak flows that cannot be created via the import API.
+# ConfigMap holding the Keycloak vault realm definition.
+# keycloakConfigCli (enabled in overrides/keycloak.yaml) mounts this and
+# imports it once after Keycloak starts.
 #
-# Source: vault-automation/config/keycloak-realm-clean.json
+# Regenerate this file whenever config/keycloak-realm-clean.json changes:
+#   python3 scripts/gen-realm-configmap.py   (or see the comment block here)
+#
+# Apply before deploying Keycloak:
+#   kubectl apply -f manifests/keycloak-realm-configmap.yaml -n vault
 # ─────────────────────────────────────────────────────────────────────────────
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -874,6 +879,7 @@ data:
           "defaultClientScopes": [
             "web-origins",
             "acr",
+            "basic",
             "profile",
             "roles",
             "email"
