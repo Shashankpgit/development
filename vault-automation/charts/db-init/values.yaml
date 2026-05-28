@@ -1,0 +1,5 @@
+# charts/db-init/values.yaml
+# Default (empty) values — all real values must come from global-secrets.yaml.
+
+dbInit:
+  keycloakDbPassword: ""

@@ -1,0 +1,16 @@
+# overrides/ingress-nginx.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+# Override values for: charts/ingress-nginx
+# Community chart is untouched — all customization is here.
+# ─────────────────────────────────────────────────────────────────────────────
+
+controller:
+  # Make this the default IngressClass in the cluster.
+  # Any Ingress object without an explicit ingressClassName automatically uses this.
+  # Default is false — we set true since this is our only ingress controller.
+  ingressClassResource:
+    default: true
+
+  # service.type is already LoadBalancer by default.
+  # On GKE this automatically provisions a Google Cloud Load Balancer
+  # and assigns a public external IP — no extra config needed.

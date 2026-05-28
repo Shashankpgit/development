@@ -1,0 +1,15 @@
+# templates/service.yaml
+# ClusterIP Service — frontend is not exposed directly to the internet.
+# The Ingress controller routes / traffic here.
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault-frontend
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: vault-frontend
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+      protocol: TCP

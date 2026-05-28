@@ -1,0 +1,5 @@
+apiVersion: v2
+name: vault-frontend
+description: React + nginx frontend for the Personal Vault application.
+type: application
+version: 0.1.0

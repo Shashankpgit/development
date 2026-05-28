@@ -1,0 +1,23 @@
+# charts/vault-frontend/values.yaml
+# Default values — overridden by global-values.yaml at deploy time.
+
+image:
+  registry: ghcr.io
+  repository: shashankpgit/vault-nginx
+  tag: latest
+  pullPolicy: Always
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 80          # port the Service exposes inside the cluster
+  targetPort: 80    # port nginx listens on inside the container
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi

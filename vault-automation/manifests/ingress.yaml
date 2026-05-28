@@ -1,0 +1,137 @@
+# manifests/ingress.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+# Single Ingress for the entire vault stack.
+#
+# Apply after all services are deployed:
+#   kubectl apply -f manifests/ingress.yaml -n vault
+# ─────────────────────────────────────────────────────────────────────────────
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vault-ingress
+  annotations:
+    # cert-manager — issues and renews TLS certificate from Let's Encrypt
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+
+    # Keycloak's OIDC responses include large Set-Cookie and auth headers.
+    # Default nginx buffer is 4k — Keycloak exceeds this and returns 502.
+    # 16k is the widely documented fix.
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "4"
+    nginx.ingress.kubernetes.io/proxy-busy-buffers-size: "16k"
+
+    # Keycloak auth flows can take time — prevent premature 504 timeouts
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+
+spec:
+  ingressClassName: nginx
+
+  # TLS — cert-manager creates and manages this Secret automatically.
+  # On first apply, cert-manager contacts Let's Encrypt and issues the cert.
+  tls:
+    - hosts:
+        - vaultpraja.duckdns.org
+      secretName: vault-tls-secret
+
+  rules:
+    - host: vaultpraja.duckdns.org
+      http:
+        paths:
+
+          # ── Keycloak paths ────────────────────────────────────────────────
+          # These specific paths must come BEFORE the catch-all / rule.
+          # ingress-nginx matches more specific paths first.
+          #
+          # /realms/      — OIDC endpoints (login, token, logout)
+          # /resources/   — theme assets (CSS, images, fonts)
+          # /.well-known/ — OIDC discovery document
+          # /js/          — Keycloak JS adapter (account console assets)
+          #
+          # NOTE: /admin/ is intentionally NOT exposed — unnecessary attack surface.
+          # Access the admin console via kubectl port-forward if needed.
+
+          - path: /realms/
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 80
+
+          - path: /resources/
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 80
+
+          - path: /.well-known/
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 80
+
+          - path: /js/
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 80
+
+          # ── API (via Kong) ────────────────────────────────────────────────
+          # Kong validates the JWT then forwards to vault-api.
+          # Service name is <release-name>-kong-proxy — release name is "kong".
+          - path: /api/
+            pathType: Prefix
+            backend:
+              service:
+                name: kong-kong-proxy
+                port:
+                  number: 80
+
+          # ── Frontend ──────────────────────────────────────────────────────
+          # Catch-all — must be LAST. Everything else goes to the React app.
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vault-frontend
+                port:
+                  number: 80
+
+---
+# ── /auth redirect ────────────────────────────────────────────────────────────
+# A second Ingress object just for this redirect.
+# Visiting vaultpraja.duckdns.org/auth sends the user to Keycloak's account page.
+#
+# Why a separate Ingress: the permanent-redirect annotation applies to ALL paths
+# in an Ingress object. Splitting it out keeps the main routing rules clean.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vault-auth-redirect
+  annotations:
+    nginx.ingress.kubernetes.io/permanent-redirect: "https://vaultpraja.duckdns.org/realms/vault/account/"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - vaultpraja.duckdns.org
+      secretName: vault-tls-secret    # same Secret — already issued by cert-manager
+  rules:
+    - host: vaultpraja.duckdns.org
+      http:
+        paths:
+          - path: /auth
+            pathType: Exact
+            backend:
+              service:
+                name: vault-frontend  # placeholder — redirect fires before backend is reached
+                port:
+                  number: 80

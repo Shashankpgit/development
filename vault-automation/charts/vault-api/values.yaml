@@ -1,0 +1,29 @@
+# charts/vault-api/values.yaml
+# Default values — overridden by global-values.yaml and global-secrets.yaml at deploy time.
+
+image:
+  registry: ghcr.io
+  repository: shashankpgit/vault-api
+  tag: latest
+  pullPolicy: Always
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 8000        # port the Service exposes inside the cluster
+  targetPort: 8000  # port the container listens on
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+# Secrets — must be provided via global-secrets.yaml, never hardcoded here.
+vaultApi:
+  secrets:
+    encryptionKey: ""
+    databaseUrl: ""

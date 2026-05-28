@@ -1,0 +1,76 @@
+# templates/job.yaml
+# Runs once. Creates all additional databases/users that community charts
+# do not handle. Add more psql commands here as the stack grows.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-init
+spec:
+  ttlSecondsAfterFinished: 120    # auto-delete 2 minutes after completion
+
+  template:
+    spec:
+      restartPolicy: Never
+
+      initContainers:
+        # Wait for PostgreSQL to be ready before running any SQL.
+        # pg_isready exits 0 when the server is accepting connections.
+        - name: wait-for-postgres
+          image: postgres:16-alpine
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Waiting for PostgreSQL to be ready..."
+              until pg_isready -h postgresql -U postgres; do
+                echo "Not ready yet, retrying in 3s..."
+                sleep 3
+              done
+              echo "PostgreSQL is ready."
+          env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql
+                  key: postgres-password
+
+      containers:
+        - name: create-databases
+          image: postgres:16-alpine
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+
+              echo "→ Creating keycloak user..."
+              psql -h postgresql -U postgres -c \
+                "DO \$\$ BEGIN
+                   CREATE USER keycloak WITH PASSWORD '$KEYCLOAK_DB_PASS';
+                 EXCEPTION WHEN duplicate_object THEN
+                   RAISE NOTICE 'User keycloak already exists, skipping.';
+                 END \$\$;"
+
+              echo "→ Creating keycloak database..."
+              psql -h postgresql -U postgres -c \
+                "SELECT 'exists' FROM pg_database WHERE datname='keycloak'" \
+              | grep -q exists || \
+              psql -h postgresql -U postgres -c \
+                "CREATE DATABASE keycloak OWNER keycloak;"
+
+              echo "→ All databases ready."
+
+          env:
+            # Postgres superuser password — from the Secret the postgresql chart created
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql
+                  key: postgres-password
+
+            # Keycloak DB password — from the Secret this chart created (templates/secret.yaml)
+            - name: KEYCLOAK_DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-db-secret
+                  key: password

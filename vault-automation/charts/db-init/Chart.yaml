@@ -1,0 +1,8 @@
+apiVersion: v2
+name: db-init
+description: >
+  One-time Job that creates additional databases and users in PostgreSQL
+  before dependent services (Keycloak, etc.) are deployed.
+  Add more databases here as the stack grows.
+type: application
+version: 0.1.0

@@ -1,0 +1,59 @@
+# overrides/kong.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+# Override values for: charts/kong
+# Community chart is untouched — all customization is here.
+#
+# Apply the ConfigMap first, then deploy:
+#   kubectl apply -f manifests/kong-config.yaml -n vault
+#   helm install kong charts/kong/ -f overrides/kong.yaml -n vault
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── DB-less mode ──────────────────────────────────────────────────────────────
+# Kong runs without a database. All config comes from kong.yml (the ConfigMap).
+# This is the default (database: "off") but made explicit here for clarity.
+env:
+  database: "off"
+
+  # GKE nodes do not have IPv6 loopback enabled.
+  # The chart defaults KONG_ADMIN_LISTEN to "127.0.0.1:8444, [::1]:8444"
+  # which causes Kong to crash with "bind() to [::1]:8444 failed".
+  # Setting it to "off" disables the admin listener entirely — safe since
+  # we don't need admin API access in production (admin.enabled: false).
+  admin_listen: "off"
+
+# ── Declarative config ────────────────────────────────────────────────────────
+# Point Kong at the ConfigMap we created in manifests/kong-config.yaml.
+# Kong mounts this and loads it on startup.
+dblessConfig:
+  configMap: kong-config
+
+# ── Disable Kong Ingress Controller ───────────────────────────────────────────
+# We use ingress-nginx as the Ingress controller, not Kong.
+# Disabling this prevents Kong from trying to watch Ingress objects.
+ingressController:
+  enabled: false
+
+# ── Proxy service ─────────────────────────────────────────────────────────────
+# TLS terminates at ingress-nginx. Kong only receives plain HTTP internally.
+# ClusterIP — not exposed to the internet directly.
+proxy:
+  type: ClusterIP
+  http:
+    enabled: true
+  tls:
+    enabled: false
+
+# ── Admin API ─────────────────────────────────────────────────────────────────
+# Admin API disabled — never expose this in production.
+# Use kubectl port-forward if you need it locally.
+admin:
+  enabled: false
+
+# ── Resources ─────────────────────────────────────────────────────────────────
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi

@@ -25,4 +25,3 @@ Thumbs.db
 htmlcov/
 
 # Helm secrets — never commit
-vault-automation/global-secrets.yaml

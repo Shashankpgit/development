@@ -1,0 +1,35 @@
+# overrides/postgresql.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+# Override values for: charts/postgresql
+# Community chart is untouched — all customization is here.
+#
+# Passwords come from global-secrets.yaml (gitignored).
+# Deploy with:
+#   helm install postgresql charts/postgresql/ \
+#     -f overrides/postgresql.yaml \
+#     -f global-secrets.yaml \
+#     -n vault
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Auth ──────────────────────────────────────────────────────────────────────
+# Non-secret values only. Passwords come from global-secrets.yaml.
+auth:
+  username: vault
+  database: vault
+
+# ── Primary node ──────────────────────────────────────────────────────────────
+primary:
+
+  # Persistent volume — stores the actual database files on disk.
+  persistence:
+    storageClass: standard-rwo
+    size: 10Gi
+
+  # Resource requests and limits.
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi

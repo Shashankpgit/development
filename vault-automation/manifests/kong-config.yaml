@@ -1,0 +1,73 @@
+# manifests/kong-config.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+# ConfigMap holding Kong's declarative configuration (DB-less mode).
+# The Kong Helm chart mounts this as a file and loads it on startup.
+#
+# Apply before deploying Kong:
+#   kubectl apply -f manifests/kong-config.yaml -n vault
+# ─────────────────────────────────────────────────────────────────────────────
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kong-config
+data:
+  kong.yml: |
+    _format_version: "3.0"
+
+    services:
+      - name: vault-api
+        # K8s service name — resolves to vault-api pod within the vault namespace
+        url: http://vault-api:8000
+        routes:
+          - name: vault-api-route
+            paths:
+              - /api
+            # strip_path: true removes the /api prefix before forwarding.
+            # Request: /api/users → forwarded to vault-api as: /users
+            strip_path: true
+
+    consumers:
+      - username: keycloak-issuer
+        jwt_secrets:
+          # Only the production issuer — tokens will always come from this URL in K8s.
+          - key: https://vaultpraja.duckdns.org/realms/vault
+            algorithm: RS256
+            rsa_public_key: |
+              -----BEGIN PUBLIC KEY-----
+              MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqCoUkhyToUTyn0IXip7z
+              0NM2cDSdw8Cjj8zBmNAo1HkByk8n7Q5EgpFZhehMjtLhPs6VNg+RdFK9S3EyN00N
+              +SG2R3Llj49HzE1q4P1tP25dM+7lM5rwSdkujOSDAVFfTdUIDWIFK6hU6JErxlWA
+              7TQBpCApOne9goNSZTxWG5vUlLcV30N3LUDzYNj7n7x7NTpUZDHoZP0660EDd2kP
+              s2UVuXqb4i3DC6a8BHALCxExwXzGZ6J1Il0Mjqvijp0jVVsFmp9tBjvjfwL4sEfN
+              OaQ4PdBmR2MHC2bBpJNl52QNOn9s6vBIHw06wKDELyl3LPzo3EBKDfhA/NY/xoM+
+              qwIDAQAB
+              -----END PUBLIC KEY-----
+
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 100
+          policy: local
+
+      - name: cors
+        config:
+          origins:
+            - https://vaultpraja.duckdns.org
+          methods:
+            - GET
+            - POST
+            - PUT
+            - DELETE
+            - OPTIONS
+          headers:
+            - Authorization
+            - Content-Type
+          credentials: true
+
+      - name: jwt
+        service: vault-api
+        config:
+          key_claim_name: iss
+          claims_to_verify:
+            - exp

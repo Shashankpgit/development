@@ -1,0 +1,46 @@
+# templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vault-api
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: vault-api
+  template:
+    metadata:
+      labels:
+        app: vault-api
+    spec:
+      containers:
+        - name: vault-api
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.targetPort }}
+
+          env:
+            - name: APP_ENV
+              value: "production"
+
+            # Sensitive vars — read from the Secret created by templates/secret.yaml
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: vault-api-secret
+                  key: DATABASE_URL
+
+            - name: VAULT_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: vault-api-secret
+                  key: VAULT_ENCRYPTION_KEY
+
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}

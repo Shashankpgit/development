@@ -1,0 +1,87 @@
+# overrides/keycloak.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+# Override values for: charts/keycloak
+# Community chart is untouched — all customization is here.
+#
+# Secrets (adminPassword, externalDatabase.password) come from global-secrets.yaml.
+# Deploy with:
+#   helm install keycloak charts/keycloak/ \
+#     -f overrides/keycloak.yaml \
+#     -f global-secrets.yaml \
+#     -n vault
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Image ─────────────────────────────────────────────────────────────────────
+# Bitnami stopped publishing new images to docker.io/bitnami/.
+# bitnamilegacy is the Docker Hub org that still hosts these images publicly.
+# The chart and tag stay the same — only the repository changes.
+image:
+  repository: bitnamilegacy/keycloak
+
+# ── Disable bundled PostgreSQL ────────────────────────────────────────────────
+# The chart ships with its own PostgreSQL. We already have one running.
+# Disabling this prevents a second PostgreSQL pod from being created.
+postgresql:
+  enabled: false
+
+# ── External database ─────────────────────────────────────────────────────────
+# Point Keycloak at our existing PostgreSQL service.
+# Non-secret values here. Password comes from global-secrets.yaml.
+externalDatabase:
+  host: postgresql       # K8s service name of our PostgreSQL (same namespace)
+  port: 5432
+  user: keycloak         # user created by the db-init job
+  database: keycloak     # database created by the db-init job
+
+# ── Proxy and hostname config ─────────────────────────────────────────────────
+# TLS terminates at ingress-nginx. Keycloak itself receives plain HTTP.
+# These three settings make that work correctly.
+
+# Trust X-Forwarded-Proto/Host headers from ingress-nginx.
+# Ensures tokens carry https:// in their iss claim — required for Kong JWT verification.
+proxyHeaders: xforwarded
+
+extraEnvVars:
+  # Keycloak must accept plain HTTP from ingress-nginx (TLS terminates at the Ingress).
+  # Without this, Keycloak refuses non-HTTPS connections and returns 403/redirect errors.
+  - name: KC_HTTP_ENABLED
+    value: "true"
+
+  # The public URL Keycloak puts in tokens and redirects.
+  # Must match what the browser actually uses — Kong verifies the iss claim against this.
+  - name: KC_HOSTNAME
+    value: "https://vaultpraja.duckdns.org"
+
+# ── Realm import ─────────────────────────────────────────────────────────────
+# keycloakConfigCli runs a one-time Job after Keycloak starts.
+# It imports the vault realm from the ConfigMap we create before upgrading.
+# Create the ConfigMap first:
+#   kubectl create configmap keycloak-realm-config \
+#     --from-file=vault-realm.json=vault/keycloak/realm-export.json \
+#     -n vault
+keycloakConfigCli:
+  enabled: true
+  existingConfigmap: keycloak-realm-config
+
+  # Same Docker Hub issue as the main Keycloak image — use bitnamilegacy
+  image:
+    repository: bitnamilegacy/keycloak-config-cli
+
+  # Default requests (500m CPU, 512Mi) are too high for a single-node cluster.
+  # This is a short-lived import job — it doesn't need production-grade resources.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi
+
+# ── Resources ─────────────────────────────────────────────────────────────────
+resources:
+  requests:
+    cpu: 300m
+    memory: 768Mi
+  limits:
+    cpu: 1000m
+    memory: 1280Mi

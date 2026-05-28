@@ -1,0 +1,78 @@
+# global-cloud-values.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+# GKE-specific values. Swap this file when deploying to a different cloud
+# (EKS, AKS, DigitalOcean) — application values stay the same.
+#
+# Everything here is infrastructure/platform level, not application level.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Cloud provider info ───────────────────────────────────────────────────────
+cloud:
+  provider: gke
+  region: asia-south1
+  zone: asia-south1-a
+  project: learning-gcp-496710
+
+# ── Storage class ─────────────────────────────────────────────────────────────
+# GKE provides these storage classes out of the box:
+#   standard          → HDD, cheapest, slower
+#   standard-rwo      → balanced persistent disk (recommended)
+#   premium-rwo       → SSD, fastest, most expensive
+#
+# Used by PersistentVolumeClaims (PostgreSQL data volume)
+storageClass: standard-rwo
+
+# ── Resource requests and limits ──────────────────────────────────────────────
+# requests: guaranteed minimum (K8s uses this for scheduling)
+# limits:   hard ceiling (pod is killed if it exceeds memory limit)
+#
+# Sized for a single e2-standard-2 node (2 vCPU, 8GB RAM)
+resources:
+  postgresql:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  keycloak:
+    requests:
+      cpu: 300m
+      memory: 768Mi
+    limits:
+      cpu: 1000m
+      memory: 1280Mi
+
+  kong:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+  vaultApi:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+  vaultFrontend:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+# ── Node selector ─────────────────────────────────────────────────────────────
+# Ensures pods are scheduled only on the vault node pool
+nodeSelector:
+  cloud.google.com/gke-nodepool: vault-node-pool
+
+# ── Persistent disk sizes ─────────────────────────────────────────────────────
+storage:
+  postgresql: 10Gi

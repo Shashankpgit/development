@@ -1,0 +1,39 @@
+# manifests/cluster-issuer.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+# ClusterIssuer tells cert-manager HOW to request TLS certificates.
+# This is a cert-manager custom resource (CRD), not a Helm chart.
+#
+# Apply once after cert-manager is running:
+#   kubectl apply -f manifests/cluster-issuer.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# How it works:
+#   1. We create an Ingress with annotation: cert-manager.io/cluster-issuer: letsencrypt-prod
+#   2. cert-manager sees that annotation and uses THIS ClusterIssuer to request a cert
+#   3. Let's Encrypt sends an HTTP-01 challenge to http://vaultpraja.duckdns.org/.well-known/acme-challenge/...
+#   4. ingress-nginx (already running) serves that challenge response
+#   5. Let's Encrypt verifies it and issues the certificate
+#   6. cert-manager stores it as a K8s Secret and keeps it renewed automatically
+
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    # Let's Encrypt production API — issues real trusted certificates
+    server: https://acme-v02.api.letsencrypt.org/directory
+
+    # Email for expiry notifications and account recovery
+    email: shashankp@sanketika.in
+
+    # Where cert-manager stores the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-prod-account-key
+
+    # HTTP-01 solver — proves domain ownership by serving a file over HTTP
+    # ingress-nginx handles serving the challenge automatically
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: nginx

@@ -1,0 +1,11 @@
+# overrides/cert-manager.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+# Override values for: charts/cert-manager
+# Community chart is untouched — all customization is here.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Install CRDs (Certificate, ClusterIssuer, etc.) as part of this Helm release.
+# Default is false — we must set it to true on first install.
+# CRDs teach Kubernetes about new object types that cert-manager needs.
+crds:
+  enabled: true
