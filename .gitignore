@@ -25,3 +25,11 @@ Thumbs.db
 htmlcov/
 
 # Helm secrets — never commit
+
+# OpenTofu / Terragrunt
+.terragrunt-cache/
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+infra/infra.env
