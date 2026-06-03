@@ -16,6 +16,14 @@ resource "google_container_cluster" "primary" {
   remove_default_node_pool = true
   initial_node_count       = 1
 
+  # Set pd-standard on the temporary default node pool GKE creates during
+  # cluster initialisation. Without this it defaults to pd-balanced (SSD)
+  # which hits the SSD_TOTAL_GB quota even though the pool is deleted immediately.
+  node_config {
+    disk_type    = var.disk_type
+    disk_size_gb = var.disk_size_gb
+  }
+
   network    = var.vpc_name
   subnetwork = var.subnet_name
 

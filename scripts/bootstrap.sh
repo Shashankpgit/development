@@ -116,14 +116,36 @@ create_gke() {
   run_module "$ENV_DIR/gke"
 }
 
+outputs() {
+  local static_ip cluster_name get_creds
+
+  static_ip=$(cd "$ENV_DIR/network" && terragrunt output -raw ingress_static_ip 2>/dev/null || echo "<not applied>")
+  cluster_name=$(cd "$ENV_DIR/gke" && terragrunt output -raw cluster_name 2>/dev/null || echo "<not applied>")
+  get_creds=$(cd "$ENV_DIR/gke" && terragrunt output -raw get_credentials_command 2>/dev/null || echo "<not applied>")
+
+  echo ""
+  echo "════════════════════════════════════════════════════════════"
+  echo "  INFRASTRUCTURE OUTPUTS"
+  echo "════════════════════════════════════════════════════════════"
+  echo "  Cluster      : ${cluster_name}"
+  echo "  Ingress IP   : ${static_ip}"
+  echo ""
+  echo "  Configure kubectl:"
+  echo "    ${get_creds}"
+  echo ""
+  echo "  Update DuckDNS A record → ${static_ip}"
+  echo "════════════════════════════════════════════════════════════"
+}
+
 case "${1:-create}" in
   create)         create ;;
   delete)         delete ;;
   enable-apis)    enable_apis ;;
   create-network) create_network ;;
   create-gke)     create_gke ;;
+  outputs)        outputs ;;
   *)
-    echo "Usage: $(basename "$0") [create|delete|enable-apis|create-network|create-gke]"
+    echo "Usage: $(basename "$0") [create|delete|enable-apis|create-network|create-gke|outputs]"
     exit 1
     ;;
 esac
