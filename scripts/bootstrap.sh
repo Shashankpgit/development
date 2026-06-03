@@ -116,6 +116,27 @@ create_gke() {
   run_module "$ENV_DIR/gke"
 }
 
+scale_down() {
+  gcloud container clusters resize "${ENV_NAME}-${APP_NAME}-cluster" \
+    --node-pool "${ENV_NAME}-${APP_NAME}-node-pool" \
+    --num-nodes 0 \
+    --region "${GCP_REGION}" \
+    --project "${GCP_PROJECT_ID}" \
+    --quiet
+  echo "Cluster scaled down to 0 nodes. Control plane still running."
+}
+
+scale_up() {
+  local count="${1:-1}"
+  gcloud container clusters resize "${ENV_NAME}-${APP_NAME}-cluster" \
+    --node-pool "${ENV_NAME}-${APP_NAME}-node-pool" \
+    --num-nodes "${count}" \
+    --region "${GCP_REGION}" \
+    --project "${GCP_PROJECT_ID}" \
+    --quiet
+  echo "Cluster scaled up to ${count} node(s)."
+}
+
 outputs() {
   local static_ip cluster_name get_creds
 
@@ -143,9 +164,11 @@ case "${1:-create}" in
   enable-apis)    enable_apis ;;
   create-network) create_network ;;
   create-gke)     create_gke ;;
+  scale-down)     scale_down ;;
+  scale-up)       scale_up "${2:-1}" ;;
   outputs)        outputs ;;
   *)
-    echo "Usage: $(basename "$0") [create|delete|enable-apis|create-network|create-gke|outputs]"
+    echo "Usage: $(basename "$0") [create|delete|enable-apis|create-network|create-gke|scale-down|scale-up [n]|outputs]"
     exit 1
     ;;
 esac
