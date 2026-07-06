@@ -31,6 +31,14 @@ Every file includes:
 | [15 — Cloning: Real-World Scenarios](15-cloning-real-world-scenarios.md) | Permission errors, shallow clone, multiple accounts, line endings | Beginner → Intermediate |
 | [16 — Forking: Real-World Scenarios](16-forking-real-world-scenarios.md) | The 3-copy model, upstream sync, stale forks, PR to wrong target | Intermediate |
 | [17 — Authentication & Common Errors](17-authentication-and-common-errors.md) | SSH key setup, PAT, decoding every error message you'll see | All levels |
+| **─── GitHub Platform Features ───** | | |
+| [18 — GitHub All Features Map](18-github-all-features-map.md) | Everything GitHub offers — Issues, Actions, Packages, Pages, Security, Orgs | All levels |
+| [19 — Issues and Projects](19-github-issues-and-projects.md) | Issues, Labels, Milestones, Templates, Projects v2 (Kanban/Roadmap) | All levels |
+| [20 — Releases and Packages](20-github-releases-and-packages.md) | Tags → Releases, GitHub Container Registry, npm/Maven packages | Intermediate |
+| [21 — GitHub Pages](21-github-pages.md) | Static hosting: docs, portfolios, Storybook, custom domains | All levels |
+| [22 — Security Features](22-github-security-features.md) | Dependabot, Secret Scanning, Code Scanning (SAST), Branch Protection | All levels |
+| [23 — GitHub Actions All Use Cases](23-github-actions-all-use-cases.md) | 20+ use cases beyond CI/CD: releases, bots, cron, notifications, infra | Intermediate |
+| [24 — Organizations and Teams](24-github-organizations-and-teams.md) | Orgs, Teams, CODEOWNERS, Environments, Audit Log, least-privilege access | Intermediate |
 
 ---
 
