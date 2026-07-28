@@ -133,6 +133,14 @@ sops -d secrets.yaml > secrets.dec.yaml
 
 ---
 
+## TO add and update the new developer
+
+1. Ask for the age public key from the new developer and run this command
+
+```bash
+sops updatekeys -y cred.yaml
+```
+
 # What happens internally?
 
 ```text

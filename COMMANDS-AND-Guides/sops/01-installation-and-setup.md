@@ -16,38 +16,38 @@ Pick the block that matches your OS and CPU architecture.
 brew install sops
 
 # ── Linux: Ubuntu/Debian — x86_64 ───────────────────────────────────
-curl -LO https://github.com/getsops/sops/releases/download/v3.9.0/sops_3.9.0_amd64.deb
-sudo dpkg -i sops_3.9.0_amd64.deb
-rm sops_3.9.0_amd64.deb
+curl -LO https://github.com/getsops/sops/releases/download/v3.13.2/sops_3.13.2_amd64.deb
+sudo dpkg -i sops_3.13.2_amd64.deb
+rm sops_3.13.2_amd64.deb
 
 # ── Linux: Ubuntu/Debian — ARM64 (Graviton EC2, Raspberry Pi) ───────
-curl -LO https://github.com/getsops/sops/releases/download/v3.9.0/sops_3.9.0_arm64.deb
-sudo dpkg -i sops_3.9.0_arm64.deb
-rm sops_3.9.0_arm64.deb
+curl -LO https://github.com/getsops/sops/releases/download/v3.13.2/sops_3.13.2_arm64.deb
+sudo dpkg -i sops_3.13.2_arm64.deb
+rm sops_3.13.2_arm64.deb
 
 # ── Linux: Amazon Linux 2023 / RHEL / Fedora — x86_64 ───────────────
-curl -LO https://github.com/getsops/sops/releases/download/v3.9.0/sops-3.9.0-1.x86_64.rpm
-sudo rpm -ivh sops-3.9.0-1.x86_64.rpm
-rm sops-3.9.0-1.x86_64.rpm
+curl -LO https://github.com/getsops/sops/releases/download/v3.13.2/sops-3.13.2-1.x86_64.rpm
+sudo rpm -ivh sops-3.13.2-1.x86_64.rpm
+rm sops-3.13.2-1.x86_64.rpm
 
 # ── Linux: Amazon Linux 2023 / RHEL — ARM64 (Graviton EC2) ──────────
-curl -LO https://github.com/getsops/sops/releases/download/v3.9.0/sops-3.9.0-1.aarch64.rpm
-sudo rpm -ivh sops-3.9.0-1.aarch64.rpm
-rm sops-3.9.0-1.aarch64.rpm
+curl -LO https://github.com/getsops/sops/releases/download/v3.13.2/sops-3.13.2-1.aarch64.rpm
+sudo rpm -ivh sops-3.13.2-1.aarch64.rpm
+rm sops-3.13.2-1.aarch64.rpm
 
 # ── Linux: Any distro — x86_64 (universal binary fallback) ──────────
-curl -LO https://github.com/getsops/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64
-chmod +x sops-v3.9.0.linux.amd64
-sudo mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops
+curl -LO https://github.com/getsops/sops/releases/download/v3.13.2/sops-v3.13.2.linux.amd64
+chmod +x sops-v3.13.2.linux.amd64
+sudo mv sops-v3.13.2.linux.amd64 /usr/local/bin/sops
 
 # ── Linux: Any distro — ARM64 (universal binary fallback) ───────────
-curl -LO https://github.com/getsops/sops/releases/download/v3.9.0/sops-v3.9.0.linux.arm64
-chmod +x sops-v3.9.0.linux.arm64
-sudo mv sops-v3.9.0.linux.arm64 /usr/local/bin/sops
+curl -LO https://github.com/getsops/sops/releases/download/v3.13.2/sops-v3.13.2.linux.arm64
+chmod +x sops-v3.13.2.linux.arm64
+sudo mv sops-v3.13.2.linux.arm64 /usr/local/bin/sops
 
 # ── Verify (all platforms) ───────────────────────────────────────────
 sops --version
-# sops 3.9.0 (latest stable, July 2026)
+# sops 3.13.2 (latest stable, July 2026)
 ```
 
 **How to check your CPU architecture on Linux:**
@@ -199,7 +199,7 @@ sops:
             -----END AGE ENCRYPTED FILE-----
     lastmodified: "2026-07-03T10:22:31Z"
     mac: ENC[AES256_GCM,data:ABcDe...,iv:XWG...,tag:ABc...,type:str]
-    version: 3.9.0
+    version: 3.13.2
 ```
 
 **Anatomy of the encrypted file:**
