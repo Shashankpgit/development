@@ -1,0 +1,63 @@
+# ============================================================================
+# Every value that defines the "dev" environment. One file, so a second
+# environment is a copy of this directory with this file edited.
+#
+# COST NOTE -- what actually bills here (credits, not free-tier resources):
+#
+#   EKS control plane   $0.10/hr    ~$73/month   <- flat, no free tier, ever
+#   2x t3.medium SPOT   ~$0.025/hr  ~$18/month   <- ~70% off on-demand
+#   EBS (2x 20GB gp3)   ~$3/month
+#   NAT Gateway         $0                       <- not created; see modules/network
+#   Load Balancer       $0                       <- not created; use port-forward
+#   -----------------------------------------------------------------------
+#   while running       ~$0.13/hr = ~$3.10/day = ~$94/month if left up
+#
+# The control plane bills per hour whether you use it or not, so on a $300
+# credit balance an always-on cluster lasts about 3 months. Run ./destroy.sh
+# at the end of a session and the same credit lasts far longer -- the VPC and
+# the S3 state bucket cost essentially nothing while the cluster is gone.
+# ============================================================================
+
+global:
+  # Prefix for every resource name. Keep it short: several AWS names have
+  # tight length limits and EKS appends its own suffixes.
+  name_prefix: shop-dev
+
+  aws_region: ap-south-1
+
+  # --- network -------------------------------------------------------------
+  vpc_cidr: "10.20.0.0/16"
+  # Two AZs is the MINIMUM -- EKS rejects a single-AZ cluster outright.
+  az_suffixes: ["a", "b"]
+
+  # --- eks control plane ---------------------------------------------------
+  eks_cluster_version: "1.33"
+  # true so kubectl reaches the cluster from your laptop with no VPN/bastion.
+  eks_endpoint_public_access: true
+  # Narrow this to "YOUR.PUBLIC.IP/32". It is free and strictly better than
+  # letting the whole internet attempt to authenticate.
+  eks_public_access_cidrs: ["0.0.0.0/0"]
+  # Empty on purpose: control plane logging bills by ingestion and "audit" is
+  # high volume. Add ["api", "audit"] temporarily to debug authorisation.
+  eks_cluster_log_types: []
+
+  # --- eks nodes -----------------------------------------------------------
+  # t3.medium allows 17 pods/node. t3.small allows only 11, and kube-system
+  # takes 4-5 of those. See modules/eks/variables.tf for the full table.
+  eks_node_instance_type: t3.medium
+  # SPOT: ~70% cheaper, reclaimable with 2 minutes' notice. Good for learning
+  # precisely because it exercises your PodDisruptionBudget for real.
+  eks_node_capacity_type: SPOT
+  eks_node_count_desired: 2
+  eks_node_count_min: 1
+  eks_node_count_max: 3
+  eks_node_disk_size_gb: 20
+
+  # REQUIRED for this app: the in-cluster Postgres uses a PVC, and without the
+  # EBS CSI driver that PVC stays Pending forever with no obvious cause.
+  eks_enable_ebs_csi_driver: true
+
+  tags:
+    Environment: dev
+    Project: nimbus-store
+    Owner: shashank

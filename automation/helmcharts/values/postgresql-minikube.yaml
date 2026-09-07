@@ -1,0 +1,76 @@
+# ============================================================================
+# Bitnami postgresql chart -- minikube / local development ONLY
+#
+# For EKS, do NOT deploy this chart. Use Amazon RDS instead: a database in a
+# pod loses its data the moment the pod is rescheduled unless you get
+# StatefulSets, PVCs, backups and failover exactly right -- and RDS already
+# did all of that.
+#
+#   helm upgrade --install shop-db ./postgresql -n shop -f values/postgresql-minikube.yaml
+# ============================================================================
+
+image:
+  registry: docker.io
+  repository: bitnami/postgresql
+  # As of August 2025 Bitnami moved all *versioned* tags to the
+  # `bitnamilegacy/` repository; only `latest` remains freely pullable from
+  # `bitnami/`. That is why this is not pinned. It is also a reason to prefer
+  # RDS in production rather than depending on someone else's image policy.
+  tag: latest
+  pullPolicy: IfNotPresent
+
+auth:
+  # DEV CREDENTIALS. Fine here because minikube is on your laptop and nothing
+  # is exposed. For EKS these come from AWS Secrets Manager, never a file.
+  postgresPassword: postgres_admin_pass   # the superuser
+  username: shop_user                     # the app's own least-privilege user
+  password: shop_pass
+  database: shop_db
+
+  # The chart creates a Secret named "<release>-postgresql" holding:
+  #   postgres-password  -> the superuser password
+  #   password           -> the custom user's password  <-- what shop-api uses
+  # shop-api references that Secret by name instead of ever seeing the value.
+
+primary:
+  # Explicit rather than resourcesPreset: nano is too tight for Postgres 18
+  # and shows up as a mysteriously slow first boot.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+  persistence:
+    enabled: true
+    size: 2Gi
+    # minikube's default StorageClass is "standard" (hostpath provisioner),
+    # which writes to a directory inside the minikube VM. It survives pod
+    # restarts and `minikube stop`, but NOT `minikube delete`.
+    storageClass: standard
+
+  # Postgres is stateful, so the pod must come back with the SAME identity and
+  # the SAME volume. That is what a StatefulSet gives you and a Deployment
+  # does not -- the chart handles this for us.
+
+  # Extra tuning would go here, e.g.
+  # extendedConfiguration: |
+  #   max_connections = 200
+
+# Off: a single primary is right for local testing. Read replicas add
+# streaming replication, which is a whole topic of its own.
+readReplicas:
+  replicaCount: 0
+
+# Turn on if the Postgres pod fails with a permissions error on /bitnami.
+# It runs a tiny root initContainer to chown the volume. minikube's hostpath
+# provisioner usually makes this unnecessary.
+volumePermissions:
+  enabled: false
+
+# The exporter feeds Prometheus. Off for now -- it belongs with the
+# observability work in automation/, not here.
+metrics:
+  enabled: false

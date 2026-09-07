@@ -1,0 +1,45 @@
+{{- if .Values.seed.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ printf "%s-seed" (include "shop-api.fullname" .) }}
+  labels: {{- include "shop-api.labels" . | nindent 4 }}
+  annotations:
+    # Helm HOOK: runs after the release is applied, and helm WAITS for it to
+    # succeed before reporting the release as deployed. A failed seed therefore
+    # fails the release loudly, instead of leaving an empty database behind a
+    # green checkmark.
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    # Job specs are immutable, so the old Job must be deleted before the new
+    # one is created -- without this the second `helm upgrade` fails outright.
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 2               # retry, e.g. if Postgres is still warming up
+  ttlSecondsAfterFinished: 3600 # clean up the finished Job after an hour
+  template:
+    metadata:
+      labels: {{- include "shop-api.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: seed
+    spec:
+      # Never: a Job pod that exits 0 must not be restarted. OnFailure/Always
+      # here would make a SUCCESSFUL seed loop forever.
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+      containers:
+        - name: seed
+          image: {{ include "shop-api.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # Same image as the API, different command. app/seed.py is
+          # idempotent, so re-running it on every upgrade is safe.
+          command: ["python", "-m", "app.seed"]
+          env: {{- include "shop-api.env" . | nindent 12 }}
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { cpu: 300m, memory: 256Mi }
+{{- end }}

@@ -1,0 +1,13 @@
+apiVersion: v2
+name: shop-api
+description: Nimbus Store backend - FastAPI CRUD API backed by PostgreSQL
+type: application
+
+# version:    the version of THIS CHART. Bump when templates change.
+# appVersion: the version of the APP inside. Bump when you ship new code.
+version: 0.1.0
+appVersion: "1.0.1"
+
+keywords: [fastapi, crud, postgres, api]
+maintainers:
+  - name: Shashank

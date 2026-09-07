@@ -1,0 +1,9 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+sqlalchemy==2.0.36
+pydantic[email]==2.10.4
+# Reads configuration from environment variables (app/config.py).
+pydantic-settings==2.7.0
+# The PostgreSQL driver. [binary] ships a precompiled wheel, so the image does
+# not need gcc and libpq-dev installed just to build it.
+psycopg[binary]==3.2.3

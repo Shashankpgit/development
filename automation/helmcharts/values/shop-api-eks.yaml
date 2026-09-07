@@ -1,0 +1,67 @@
+# ============================================================================
+# shop-api -- EKS
+#   helm upgrade --install shop-api ./shop-api -n shop -f values/shop-api-eks.yaml
+# ============================================================================
+
+image:
+  # Pulled from Docker Hub, so unlike minikube this needs a real registry path.
+  repository: shashank04515/shop-api
+  tag: "1.0.1"
+  # IfNotPresent is safe because the tag is immutable. If you ever deploy
+  # ":latest", this MUST become Always or nodes will keep serving a cached
+  # older image indefinitely.
+  pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 192Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Spreads the 2 pods across the 2 AZs, so losing one AZ (or one SPOT node)
+# leaves the API serving.
+podAntiAffinity: true
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+database:
+  # The Secret the Bitnami chart creates. Swap for an RDS-backed Secret by
+  # changing existingSecret + host and nothing else.
+  existingSecret: shop-db-postgresql
+  existingSecretKey: password
+  host: shop-db-postgresql
+  port: 5432
+  name: shop_db
+  user: shop_user
+
+  # PRODUCTION: this should be false, with Alembic migrations run as a Job.
+  # create_all() cannot alter an existing table, and N pods racing to
+  # CREATE TABLE on a cold database is a genuine deploy failure.
+  # Left true here so a fresh cluster works end to end unattended.
+  autoCreateTables: true
+
+seed:
+  enabled: true      # demo data, so the UI is not empty. Idempotent.
+
+# Only relevant if a browser calls the API directly. Normal traffic goes
+# through shop-web's nginx and is therefore same-origin.
+corsOrigins: "http://localhost:8080"
+
+# Left off deliberately: an ALB costs ~$16/month plus LCU charges, and
+# `kubectl port-forward` is free. Turn it on when you specifically want to
+# practise the AWS Load Balancer Controller -- which must be installed first.
+ingress:
+  enabled: false
+  className: alb
+  host: shop.example.com
+  path: /api
+  annotations: {}
+    # alb.ingress.kubernetes.io/scheme: internet-facing
+    # alb.ingress.kubernetes.io/target-type: ip
+    # alb.ingress.kubernetes.io/group.name: shop      # share ONE ALB with shop-web

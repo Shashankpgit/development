@@ -1,0 +1,117 @@
+{{- include "shop-api.validate" . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "shop-api.fullname" . }}
+  labels: {{- include "shop-api.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  # Omitted when the HPA is on, otherwise every `helm upgrade` would reset the
+  # replica count and fight the autoscaler.
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      # maxUnavailable: 0 -> capacity never dips during a deploy.
+      # maxSurge: 1 -> add one new pod, wait for its readiness probe, then
+      # retire one old pod. This is what makes the upgrade zero-downtime.
+      maxUnavailable: 0
+      maxSurge: 1
+
+  selector:
+    matchLabels: {{- include "shop-api.selectorLabels" . | nindent 6 }}
+
+  template:
+    metadata:
+      labels: {{- include "shop-api.selectorLabels" . | nindent 8 }}
+      {{- if and (not .Values.database.existingSecret) .Values.database.url }}
+      annotations:
+        # A hash of the Secret's contents. Changing a Secret does NOT restart
+        # pods, so a rotated password would be ignored until something else
+        # restarted them. This annotation changes when the Secret changes,
+        # which changes the pod template, which triggers a rolling restart.
+        checksum/db-secret: {{ include (print $.Template.BasePath "/secret-db.yaml") . | sha256sum }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "shop-api.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      # Drop root. A container's root IS root on the host kernel by default.
+      # This is the "restricted" Pod Security Standard, which EKS increasingly
+      # enforces outright.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+
+      {{- if .Values.podAntiAffinity }}
+      affinity:
+        podAntiAffinity:
+          # "preferred", not "required": spread pods across nodes when
+          # possible, but still schedule them on a single-node cluster like
+          # minikube. "required" would leave pods Pending forever here.
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels: {{- include "shop-api.selectorLabels" . | nindent 20 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      containers:
+        - name: api
+          image: {{ include "shop-api.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            # The app reads its own code and writes to a socket, nothing else.
+            # If it ever needs /tmp, mount an emptyDir rather than disabling this.
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+
+          ports:
+            - name: http
+              containerPort: {{ .Values.port }}
+
+          env: {{- include "shop-api.env" . | nindent 12 }}
+
+          # --- THREE probes, each answering a different question -------------
+          # startupProbe: "has it booted?" Liveness is PAUSED while this runs.
+          #   Without it, a slow first boot (waiting on Postgres) would trip
+          #   liveness and crash-loop the pod forever.
+          startupProbe:
+            httpGet: { path: /health, port: http }
+            failureThreshold: 30
+            periodSeconds: 2            # up to 60s to start
+          # livenessProbe: "is it wedged?" Failure RESTARTS the pod, so it hits
+          #   /health, which never touches the database. Checking the DB here
+          #   would turn a brief outage into a cluster-wide crash loop.
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+          # readinessProbe: "send it traffic?" Failure only removes the pod
+          #   from the Service, so a DB blip stops traffic without restarting
+          #   anything and recovers by itself. Hence the DB check lives here.
+          readinessProbe:
+            httpGet: { path: /health/ready, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          resources: {{- toYaml .Values.resources | nindent 12 }}

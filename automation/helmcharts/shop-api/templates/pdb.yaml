@@ -1,0 +1,14 @@
+{{- if and .Values.podDisruptionBudget.enabled (gt (int .Values.replicaCount) 1) }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "shop-api.fullname" . }}
+  labels: {{- include "shop-api.labels" . | nindent 4 }}
+spec:
+  # Guards against VOLUNTARY disruption: node drains, cluster upgrades, the
+  # autoscaler consolidating nodes. Without it, draining a node can evict every
+  # API pod at once and take the app down during routine maintenance.
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels: {{- include "shop-api.selectorLabels" . | nindent 6 }}
+{{- end }}

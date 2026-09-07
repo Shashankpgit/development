@@ -1,0 +1,110 @@
+# ============================================================================
+# shop-api values
+#
+# This chart deploys ONLY the backend. The frontend is a separate release
+# (../shop-web) so the two can be upgraded and rolled back independently.
+# ============================================================================
+
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  # With minikube we build straight into the cluster's own Docker daemon
+  # (eval $(minikube docker-env)), so there is no registry prefix at all.
+  # For EKS this becomes e.g. docker.io/youruser/shop-api
+  repository: shop-api
+  tag: ""                  # empty -> falls back to Chart.appVersion
+  # Never is correct for minikube-local images: the image exists in the node's
+  # daemon but NOT in any registry, so Always would fail with ErrImagePull.
+  # For a real registry use IfNotPresent with immutable tags.
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+# - name: regcred
+
+replicaCount: 2            # 2, not 1: one pod means every restart is downtime
+port: 8000
+
+# Requests = what the scheduler reserves. Limits = the hard ceiling.
+# CPU over-limit throttles; MEMORY over-limit OOM-kills, hence the headroom.
+resources:
+  requests:
+    cpu: 100m
+    memory: 192Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+
+# Guards against VOLUNTARY disruption (node drains, cluster upgrades).
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# ============================================================================
+# DATABASE
+# ============================================================================
+database:
+  # Option 1 (RECOMMENDED): reference a Secret created out-of-band, so the
+  # password never lands in a values file or in git.
+  #
+  # The Bitnami postgresql chart already creates one. Point at it and give
+  # the pieces we need to assemble the URL:
+  existingSecret: ""              # e.g. "shop-db-postgresql"
+  existingSecretKey: password     # the KEY inside that Secret
+
+  # When existingSecret is set, the URL is assembled from these + the password
+  # read from the Secret at runtime. Splitting it this way means the password
+  # is never concatenated into a template, only into an env var at pod start.
+  host: shop-db-postgresql
+  port: 5432
+  name: shop_db
+  user: shop_user
+
+  # Option 2: a complete URL. Convenient for a quick test, but the password
+  # ends up in whatever values file you typed it into. Never commit that.
+  url: ""
+
+  # true  -> the app runs create_all() on startup. Fine for a demo.
+  # false -> correct for production: run Alembic migrations as a Job, because
+  #          N pods racing to CREATE TABLE is a real deploy failure.
+  autoCreateTables: true
+
+# Post-install Job loading demo products/users. Idempotent.
+seed:
+  enabled: false
+
+env: {}                    # extra env vars, e.g. LOG_LEVEL: debug
+
+# CORS origins the API will accept browser calls from. Normal traffic goes
+# through the frontend's nginx (same origin), so this only matters if a browser
+# hits the API directly.
+corsOrigins: "http://localhost:5173"
+
+service:
+  type: ClusterIP          # internal only; the Ingress is the public door
+  port: 8000
+
+# Optional: expose /api directly, bypassing the frontend's nginx proxy.
+# Useful so Postman and mobile clients get a shorter path.
+ingress:
+  enabled: false
+  className: nginx         # "alb" on EKS with the AWS Load Balancer Controller
+  host: shop.local
+  path: /api
+  annotations: {}
+  tls: []
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}          # EKS: eks.amazonaws.com/role-arn for IRSA
+
+podAntiAffinity: true      # spread pods across nodes / AZs
+nodeSelector: {}
+tolerations: []

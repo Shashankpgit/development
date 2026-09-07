@@ -1,0 +1,32 @@
+# ============================================================================
+# shop-web -- minikube
+#   helm upgrade --install shop-web ./shop-web -n shop -f values/shop-web-minikube.yaml
+# ============================================================================
+
+image:
+  repository: shop-web
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent    # built into minikube's own daemon; see shop-api
+
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 32Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+backend:
+  # Must match the shop-api Service name exactly. Get it wrong and the UI
+  # loads perfectly, then every request returns 502 -- because the HTML is
+  # served by nginx but the data comes from a backend nginx cannot reach.
+  #   kubectl get svc -n shop
+  url: http://shop-api:8000
+
+ingress:
+  enabled: false      # set true after `minikube addons enable ingress`
+  className: nginx
+  host: shop.local
+  path: /

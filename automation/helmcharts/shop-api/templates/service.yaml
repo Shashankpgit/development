@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  # This NAME is the contract with the frontend chart. shop-web is configured
+  # with backend.url = http://<this-name>:8000, and Kubernetes DNS resolves it
+  # inside the namespace -- no IP address is written down anywhere.
+  name: {{ include "shop-api.fullname" . }}
+  labels: {{- include "shop-api.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  # A Service finds its pods by LABEL, not by name. If these stop matching the
+  # pod labels, the Service has zero endpoints and every request fails with
+  # nothing in any log to explain why.
+  selector: {{- include "shop-api.selectorLabels" . | nindent 4 }}

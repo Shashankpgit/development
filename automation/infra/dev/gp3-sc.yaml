@@ -1,0 +1,34 @@
+# gp3 StorageClass, applied by provision.sh after the cluster exists.
+#
+# WHY THIS IS NOT IN THE TOFU CODE: it is a Kubernetes object, so it needs the
+# `kubernetes` provider, and that provider must be configured with the
+# cluster's endpoint and CA -- values that do not exist at plan time in the
+# same apply that creates the cluster. Keeping cloud resources and in-cluster
+# objects in separate states avoids an apply you cannot safely re-run.
+#
+# WHY gp3 AND NOT THE BUILT-IN gp2: gp3 is cheaper per GB and gives 3000 IOPS
+# at baseline instead of scaling IOPS with volume size.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gp3
+  annotations:
+    # Makes this the class used by any PVC that does not name one.
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: ebs.csi.aws.com
+
+# Delete: removing the PVC removes the EBS volume. Correct for a learning
+# cluster -- "Retain" leaves orphaned volumes billing quietly forever.
+reclaimPolicy: Delete
+
+# THE setting that matters most here. An EBS volume is locked to ONE
+# availability zone, so it must not be created until Kubernetes knows which
+# node -- and therefore which AZ -- the pod was scheduled to. With the default
+# "Immediate", the volume is provisioned up front and the pod is then often
+# unschedulable because the volume is in the wrong AZ.
+volumeBindingMode: WaitForFirstConsumer
+
+allowVolumeExpansion: true
+parameters:
+  type: gp3
+  encrypted: "true"

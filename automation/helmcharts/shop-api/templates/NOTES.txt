@@ -1,0 +1,27 @@
+✔ shop-api {{ .Chart.AppVersion }} deployed as release "{{ .Release.Name }}"
+  namespace: {{ .Release.Namespace }}
+  image:     {{ include "shop-api.image" . }}
+
+Database:
+{{- if .Values.database.existingSecret }}
+  {{ .Values.database.user }}@{{ .Values.database.host }}:{{ .Values.database.port }}/{{ .Values.database.name }}
+  password from Secret/{{ .Values.database.existingSecret }} (key: {{ .Values.database.existingSecretKey }})
+{{- else }}
+  from database.url (⚠ the password is in a values file — use existingSecret instead)
+{{- end }}
+
+The frontend chart needs this address:
+
+  --set backend.url=http://{{ include "shop-api.fullname" . }}:{{ .Values.service.port }}
+
+Watch it come up:
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }} -w
+
+Try it without an Ingress (tunnels a local port to the Service):
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "shop-api.fullname" . }} 8000:{{ .Values.service.port }}
+  curl http://localhost:8000/health/ready
+  open http://localhost:8000/docs
+
+If pods are not Ready, in this order:
+  kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }} --tail=50
+  kubectl describe pod -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}

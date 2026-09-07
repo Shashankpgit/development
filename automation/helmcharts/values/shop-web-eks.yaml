@@ -1,0 +1,39 @@
+# ============================================================================
+# shop-web -- EKS
+#   helm upgrade --install shop-web ./shop-web -n shop -f values/shop-web-eks.yaml
+# ============================================================================
+
+image:
+  repository: shashank04515/shop-web
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+podAntiAffinity: true
+
+backend:
+  # Unchanged from minikube -- and that is the point. The address is an
+  # in-cluster Service name, so it is identical in every environment. The
+  # frontend image contains no hostname at all.
+  url: http://shop-api:8000
+
+ingress:
+  enabled: false
+  className: alb
+  host: shop.example.com
+  path: /
+  annotations: {}
+    # Give BOTH ingresses the same group.name and the controller provisions a
+    # single shared ALB instead of one per Ingress -- ~$16/month instead of ~$32.
+    # alb.ingress.kubernetes.io/group.name: shop
+    # alb.ingress.kubernetes.io/scheme: internet-facing
+    # alb.ingress.kubernetes.io/target-type: ip

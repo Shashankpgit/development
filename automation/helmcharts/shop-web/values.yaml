@@ -1,0 +1,67 @@
+# ============================================================================
+# shop-web values
+#
+# Deploys ONLY the frontend. Because it is a separate release from shop-api,
+# a CSS fix can ship without touching the backend Deployment at all.
+#
+# The price of that separation is that the coupling becomes EXPLICIT: this
+# chart has to be told where the API lives. See backend.url below.
+# ============================================================================
+
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  # For minikube, build into the cluster's own Docker daemon:
+  #   eval $(minikube docker-env) && docker build -t shop-web:1.0.0 .
+  # For EKS this becomes e.g. docker.io/youruser/shop-web
+  repository: shop-web
+  tag: ""                  # empty -> falls back to Chart.appVersion
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+replicaCount: 2
+# 8080, not 80: ports below 1024 require root, and nginx-unprivileged runs as
+# an ordinary user.
+port: 8080
+
+# nginx serving static files is cheap. These are small on purpose -- if you
+# ever see it OOM-killed, something is wrong rather than under-provisioned.
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+# ============================================================================
+# BACKEND WIRING -- the one value that matters most in this file
+# ============================================================================
+backend:
+  # nginx reverse-proxies every /api/* request to this address. The browser
+  # only ever requests relative URLs (/api/products), which means:
+  #   1. no backend hostname is baked into the frontend image
+  #   2. everything is same-origin, so CORS never applies to normal traffic
+  #
+  # This must match the shop-api Service name. Kubernetes DNS resolves the
+  # short name within the same namespace; across namespaces use the full form
+  # http://shop-api.other-namespace.svc.cluster.local:8000
+  url: http://shop-api:8000
+
+service:
+  type: ClusterIP          # internal only; the Ingress is the public door
+  port: 80                 # -> container port 8080
+
+ingress:
+  enabled: false
+  className: nginx         # "alb" on EKS with the AWS Load Balancer Controller
+  host: shop.local
+  path: /
+  annotations: {}
+  tls: []
+
+podAntiAffinity: true
+nodeSelector: {}
+tolerations: []

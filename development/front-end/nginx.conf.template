@@ -1,0 +1,62 @@
+# nginx config for the built React app.
+# It lands in /etc/nginx/templates/, and the nginx image runs envsubst over
+# every file there at startup -- that is how ${BACKEND_URL} becomes a real
+# value from the environment instead of being baked into the image.
+
+server {
+    # 8080, not 80: ports below 1024 need root privileges, and this container
+    # runs as an unprivileged user.
+    listen 8080;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+    gzip_min_length 1024;
+
+    # --- API reverse proxy ------------------------------------------------
+    # THE reason the frontend never needs to know the backend's address.
+    # Browser calls /api/products (same origin, so no CORS at all) and nginx
+    # forwards it to the FastAPI Service inside the cluster.
+    location /api/ {
+        proxy_pass ${BACKEND_URL};
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        # Without these the backend logs would show nginx's IP for every
+        # request instead of the real client.
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 10s;
+        proxy_read_timeout    30s;
+    }
+
+    location /health {
+        proxy_pass ${BACKEND_URL};
+        proxy_set_header Host $host;
+    }
+
+    # nginx's own liveness endpoint -- answers even if the backend is down.
+    location = /nginx-health {
+        access_log off;
+        return 200 "ok\n";
+    }
+
+    # Hashed filenames (index-CY_xe78Q.css) can never change content, so cache
+    # them for a year. This is why Vite puts a hash in the name.
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # --- SPA fallback: the most important block in this file ---------------
+    # React Router handles /orders in the BROWSER. But if the user refreshes
+    # that URL, nginx looks for a file called /orders on disk, finds nothing
+    # and returns 404. try_files says: serve the file if it exists, otherwise
+    # hand back index.html and let React Router sort it out.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

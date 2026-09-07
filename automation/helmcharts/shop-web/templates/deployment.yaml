@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "shop-web.fullname" . }}
+  labels: {{- include "shop-web.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0     # capacity never dips during a deploy
+      maxSurge: 1
+  selector:
+    matchLabels: {{- include "shop-web.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "shop-web.selectorLabels" . | nindent 8 }}
+      annotations:
+        # BACKEND_URL is substituted into the nginx config at container start.
+        # Hashing it here means changing the backend address triggers a rolling
+        # restart, rather than silently leaving old pods pointed at the old one.
+        checksum/backend-url: {{ .Values.backend.url | sha256sum | trunc 16 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101              # the "nginx" user in nginx-unprivileged
+        seccompProfile:
+          type: RuntimeDefault
+      {{- if .Values.podAntiAffinity }}
+      affinity:
+        podAntiAffinity:
+          # "preferred", so this still schedules on single-node minikube.
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels: {{- include "shop-web.selectorLabels" . | nindent 20 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: web
+          image: {{ include "shop-web.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            # NOT read-only, unlike the API. nginx writes its rendered config,
+            # plus temp and cache files, at startup. Locking this down needs
+            # emptyDir mounts for /tmp, /var/cache/nginx and /etc/nginx/conf.d.
+            readOnlyRootFilesystem: false
+          ports:
+            - name: http
+              containerPort: {{ .Values.port }}
+          env:
+            # THE line that joins the two charts together. The image ships
+            # nginx.conf.template containing ${BACKEND_URL}; the nginx entry-
+            # point runs envsubst over it at startup. Same image, any
+            # environment, no rebuild.
+            - name: BACKEND_URL
+              value: {{ .Values.backend.url | quote }}
+          livenessProbe:
+            # nginx's OWN endpoint, not /health (which proxies to the API).
+            # The frontend must not report itself unhealthy just because the
+            # API is down -- serving the app shell with an error message is
+            # far better than serving nothing at all.
+            httpGet: { path: /nginx-health, port: http }
+            periodSeconds: 15
+          readinessProbe:
+            httpGet: { path: /nginx-health, port: http }
+            periodSeconds: 10
+          resources: {{- toYaml .Values.resources | nindent 12 }}

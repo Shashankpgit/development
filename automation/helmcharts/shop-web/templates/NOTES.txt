@@ -1,0 +1,25 @@
+✔ shop-web {{ .Chart.AppVersion }} deployed as release "{{ .Release.Name }}"
+  namespace: {{ .Release.Namespace }}
+  image:     {{ include "shop-web.image" . }}
+  proxying /api -> {{ .Values.backend.url }}
+
+⚠ Check that address matches the shop-api Service, or the UI will load and
+  then fail every request with a 502:
+    kubectl get svc -n {{ .Release.Namespace }}
+
+Open it:
+{{ if .Values.ingress.enabled -}}
+  http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.host }}
+
+  On minikube, add the host to /etc/hosts first:
+    echo "$(minikube ip)  {{ .Values.ingress.host }}" | sudo tee -a /etc/hosts
+{{- else -}}
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "shop-web.fullname" . }} 8080:{{ .Values.service.port }}
+  then open http://localhost:8080
+{{- end }}
+
+Debugging a 502 on /api calls, in order:
+  1. kubectl get endpoints -n {{ .Release.Namespace }}        # is the API Service backed by pods?
+  2. kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+  3. kubectl exec -n {{ .Release.Namespace }} deploy/{{ include "shop-web.fullname" . }} -- \
+       wget -qO- {{ .Values.backend.url }}/health

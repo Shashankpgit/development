@@ -1,0 +1,58 @@
+# ============================================================================
+# shop-api -- minikube
+#   helm upgrade --install shop-api ./shop-api -n shop -f values/shop-api-minikube.yaml
+# ============================================================================
+
+image:
+  repository: shop-api
+  tag: "1.0.1"
+  # IfNotPresent is essential here. The image was built into minikube's OWN
+  # Docker daemon (eval $(minikube docker-env)) and exists in no registry, so
+  # "Always" would fail with ErrImagePull.
+  pullPolicy: IfNotPresent
+
+# 2 replicas even on one node: it proves the rolling update and the Service
+# load-balancing actually work, which a single pod cannot.
+replicaCount: 2
+
+# Smaller than the defaults -- minikube has limited CPU to hand out, and a
+# request the node cannot satisfy leaves the pod Pending forever.
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+database:
+  # Point at the Secret the Bitnami chart created. The password is never in
+  # this file, and never in the rendered manifest -- only in the pod's env at
+  # runtime. Name = "<postgres release>-postgresql".
+  existingSecret: shop-db-postgresql
+  existingSecretKey: password
+
+  host: shop-db-postgresql        # the Service the Bitnami chart created
+  port: 5432
+  name: shop_db
+  user: shop_user
+
+  # Demo-only: the app creates its own tables on startup. In production this
+  # is false and Alembic migrations run as a separate Job.
+  autoCreateTables: true
+
+# Load demo products, categories and users after install, so the UI has
+# something to show. Idempotent, so it is safe on every upgrade.
+seed:
+  enabled: true
+
+# The browser talks to nginx, which proxies to us same-origin, so CORS does
+# not apply to normal traffic. This covers hitting the API directly during
+# development.
+corsOrigins: "http://localhost:5173,http://localhost:8080,http://shop.local"
+
+ingress:
+  enabled: false      # set true after `minikube addons enable ingress`
+  className: nginx
+  host: shop.local
+  path: /api

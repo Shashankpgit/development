@@ -1,0 +1,32 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "shop-api.fullname" . }}
+  labels: {{- include "shop-api.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  # The Ingress object is generic; these annotations are provider-specific.
+  # On EKS they configure the real ALB (scheme, target-type, certificate ARN).
+  annotations: {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- with .Values.ingress.tls }}
+  tls: {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          # Two charts can define an Ingress for the SAME host with different
+          # paths -- the controller merges them. This one claims /api; shop-web
+          # claims /. The more specific path wins, so order across charts does
+          # not matter.
+          - path: {{ .Values.ingress.path }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "shop-api.fullname" . }}
+                port:
+                  number: {{ .Values.service.port }}
+{{- end }}

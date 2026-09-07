@@ -1,0 +1,59 @@
+# ============================================================================
+# Bitnami postgresql -- EKS
+#
+# NOTE: for anything beyond learning, use Amazon RDS instead. A database in a
+# pod survives a pod restart (the PVC reattaches) but you own backups,
+# failover, minor-version upgrades and PITR yourself. RDS db.t4g.micro is
+# free-tier eligible for 12 months, which makes this an easy swap later.
+#
+#   helm upgrade --install shop-db ./postgresql -n shop -f values/postgresql-eks.yaml
+# ============================================================================
+
+image:
+  registry: docker.io
+  repository: bitnami/postgresql
+  tag: latest        # see values/postgresql-minikube.yaml for why not pinned
+  pullPolicy: IfNotPresent
+
+auth:
+  # PLACEHOLDER. Do not deploy as-is. Either pass --set auth.password=... from
+  # a secret store, or create the Secret yourself and set auth.existingSecret.
+  postgresPassword: CHANGE_ME_ADMIN
+  username: shop_user
+  password: CHANGE_ME
+  database: shop_db
+
+primary:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+  persistence:
+    enabled: true
+    size: 8Gi
+    # gp3, created by infra/dev/gp3-sc.yaml. NOT "standard" -- that class only
+    # exists on minikube, and a PVC naming a missing class waits forever.
+    storageClass: gp3
+
+  # An EBS volume is locked to ONE availability zone, and so is the pod that
+  # mounts it. Kubernetes handles this automatically because the gp3 class uses
+  # WaitForFirstConsumer -- the volume is created only after the pod is
+  # scheduled, in whichever AZ it landed in.
+  #
+  # The consequence worth knowing: if that AZ loses capacity, this pod cannot
+  # move to the other AZ. It is one more reason production wants RDS.
+
+readReplicas:
+  replicaCount: 0
+
+# The EBS CSI driver creates volumes already owned by the right user, so the
+# root init container is unnecessary.
+volumePermissions:
+  enabled: false
+
+metrics:
+  enabled: false
