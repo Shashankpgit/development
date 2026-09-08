@@ -5,6 +5,10 @@
 locals {
   global_vars = yamldecode(file(find_in_parent_folders("global-values.yaml")))
   g           = local.global_vars.global
+
+  # AZ suffixes to pin the NODE GROUP to, e.g. ["a"]. Empty = spread over all.
+  # try() so an older global-values.yaml without the key still plans.
+  node_az_suffixes = try(local.g.eks_node_az_suffixes, [])
 }
 
 terraform {
@@ -23,6 +27,10 @@ dependency "network" {
   mock_outputs = {
     vpc_id            = "vpc-00000000000000000"
     public_subnet_ids = ["subnet-00000000000000000", "subnet-11111111111111111"]
+    subnets_by_az = {
+      "${local.g.aws_region}a" = "subnet-00000000000000000"
+      "${local.g.aws_region}b" = "subnet-11111111111111111"
+    }
   }
 
   # Prefer real state once it exists, fall back to mocks per-key while it
@@ -34,7 +42,16 @@ dependency "network" {
 inputs = {
   name_prefix = local.g.name_prefix
   vpc_id      = dependency.network.outputs.vpc_id
-  subnet_ids  = dependency.network.outputs.public_subnet_ids
+  # Control plane: every subnet, because EKS requires >= 2 AZs.
+  subnet_ids = dependency.network.outputs.public_subnet_ids
+
+  # Node group: only the pinned AZs when eks_node_az_suffixes is set. This is
+  # what makes `scale.sh 0` then `scale.sh 1` able to reattach the AZ-locked
+  # Postgres EBS volume.
+  node_subnet_ids = [
+    for suffix in local.node_az_suffixes :
+    dependency.network.outputs.subnets_by_az["${local.g.aws_region}${suffix}"]
+  ]
 
   cluster_version = local.g.eks_cluster_version
 

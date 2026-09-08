@@ -5,17 +5,20 @@
 # COST NOTE -- what actually bills here (credits, not free-tier resources):
 #
 #   EKS control plane   $0.10/hr    ~$73/month   <- flat, no free tier, ever
-#   2x t3.medium SPOT   ~$0.025/hr  ~$18/month   <- ~70% off on-demand
-#   EBS (2x 20GB gp3)   ~$3/month
+#   1x t3.medium SPOT   ~$0.0125/hr ~$9/month    <- ~70% off on-demand
+#   node root EBS 20GB  ~$1.60/month
+#   Postgres PVC 8GB    ~$0.64/month
 #   NAT Gateway         $0                       <- not created; see modules/network
 #   Load Balancer       $0                       <- not created; use port-forward
 #   -----------------------------------------------------------------------
-#   while running       ~$0.13/hr = ~$3.10/day = ~$94/month if left up
+#   running, 1 node     ~$0.115/hr = ~$2.75/day = ~$84/month
+#   scaled to 0 nodes   ~$0.101/hr             = ~$74/month  (saves ~13%)
+#   destroyed           ~$0/month
 #
-# The control plane bills per hour whether you use it or not, so on a $300
-# credit balance an always-on cluster lasts about 3 months. Run ./destroy.sh
-# at the end of a session and the same credit lasts far longer -- the VPC and
-# the S3 state bucket cost essentially nothing while the cluster is gone.
+# The control plane is ~87% of the bill at one node and is charged per hour
+# from cluster creation to cluster deletion regardless of load. So:
+#   ./scale.sh dev 0   -> back tomorrow; keeps cluster, releases and data
+#   ./destroy.sh dev   -> done for a while; the only real saving
 # ============================================================================
 
 global:
@@ -48,9 +51,25 @@ global:
   # SPOT: ~70% cheaper, reclaimable with 2 minutes' notice. Good for learning
   # precisely because it exercises your PodDisruptionBudget for real.
   eks_node_capacity_type: SPOT
-  eks_node_count_desired: 2
-  eks_node_count_min: 1
+  eks_node_count_desired: 1
+  # 0 so `./scale.sh dev 0` is allowed -- AWS rejects desired_size 0 while
+  # min_size is 1. See the cost note on node_count_min in modules/eks.
+  eks_node_count_min: 0
   eks_node_count_max: 3
+
+  # Pin the node group to ONE availability zone.
+  #
+  # WHY: an EBS volume lives in exactly one AZ, and so must the pod that mounts
+  # it. With a single node free to land in either AZ, scaling back up from 0
+  # has a ~50% chance of stranding the Postgres pod as Pending with
+  # "volume node affinity conflict".
+  #
+  # The control plane still spans both AZs (az_suffixes above) because EKS
+  # requires it. Only the nodes are pinned.
+  #
+  # Set this to [] once you run 2+ nodes with no AZ-locked state, or once
+  # Postgres moves to RDS.
+  eks_node_az_suffixes: ["a"]
   eks_node_disk_size_gb: 20
 
   # REQUIRED for this app: the in-cluster Postgres uses a PVC, and without the

@@ -19,6 +19,24 @@ variable "subnet_ids" {
   type        = list(string)
 }
 
+variable "node_subnet_ids" {
+  description = <<-EOT
+    Subnets for the NODE GROUP only. Empty (default) = use subnet_ids.
+
+    WHY THIS IS SEPARATE FROM subnet_ids: the control plane must span >= 2 AZs,
+    but the node group does not have to. Pinning nodes to ONE AZ is what makes
+    scaling to 0 and back to 1 safe: an EBS volume is locked to a single AZ, so
+    if the replacement node comes up in the other AZ the Postgres pod is
+    unschedulable ("volume node affinity conflict") and never recovers.
+
+    Set this to one subnet for a single-node cluster. Leave it empty to spread
+    nodes across every AZ, which is correct once you run 2+ nodes and have no
+    AZ-locked state (or use RDS instead of an in-cluster database).
+  EOT
+  type        = list(string)
+  default     = []
+}
+
 variable "cluster_version" {
   description = <<-EOT
     Kubernetes minor version for the control plane, e.g. "1.33".
@@ -75,9 +93,20 @@ variable "node_count_desired" {
 }
 
 variable "node_count_min" {
-  description = "Minimum nodes. 1 keeps the cluster alive at the lowest cost."
+  description = <<-EOT
+    Minimum nodes.
+
+    Set 0 to allow scaling the node group down to zero between sessions. AWS
+    rejects desired_size = 0 while min_size is 1, so this must be 0 for
+    scale.sh to work.
+
+    Be clear about what that saves: the EC2 and root-EBS charges only. The EKS
+    CONTROL PLANE keeps billing $0.10/hr at 0 nodes -- ~87% of the total at one
+    node. Scaling to 0 saves roughly $11/month of a ~$84/month bill; only
+    destroying the cluster saves the rest.
+  EOT
   type        = number
-  default     = 1
+  default     = 0
 }
 
 variable "node_count_max" {

@@ -63,9 +63,15 @@ cd automation/infra
 ./provision.sh dev             # ~15 min
 ```
 
-~$0.13/hr while running — the EKS control plane is $0.10/hr with no free tier,
-so run `./destroy.sh dev` when you are done. Details and cost breakdown:
-[`docs/004`](./docs/004-eks-infrastructure.md).
+~$0.115/hr while running (1 node). The EKS control plane is $0.10/hr with no
+free tier — about 87% of that — so:
+
+```bash
+./scale.sh dev 0     # back tomorrow: keeps cluster, releases and data (~$74/mo)
+./destroy.sh dev     # done for a while: the only real saving (~$0/mo)
+```
+
+Details and full cost breakdown: [`docs/004`](./docs/004-eks-infrastructure.md).
 
 Images come from Docker Hub: `shashank04515/shop-api:1.0.1`,
 `shashank04515/shop-web:1.0.0`.

@@ -18,6 +18,7 @@ infra/
 │   └── eks/terragrunt.hcl
 ├── create_tf_backend.sh    run once: S3 state bucket + tf.sh
 ├── provision.sh            network → eks → kubeconfig → StorageClass
+├── scale.sh                node group to 0 / back to 1, between sessions
 └── destroy.sh              tear down (run this; the control plane bills hourly)
 ```
 
@@ -36,20 +37,41 @@ When you're done for the day:
 ./destroy.sh dev --all          # cluster + VPC
 ```
 
+## Scaling to save cost
+
+```bash
+./scale.sh dev          # show current state
+./scale.sh dev 0        # 0 nodes -- back tomorrow
+./scale.sh dev 1        # 1 node  -- waits until it is Ready
+```
+
+At 0 nodes every pod goes `Pending`, but nothing is deleted: Deployments,
+Services and the Postgres PVC all survive, so **no Helm reinstall is needed**.
+Scale back up and the data volume reattaches.
+
+The node group is pinned to **one AZ** (`eks_node_az_suffixes: ["a"]`) because
+an EBS volume is locked to a single AZ. Without pinning, a replacement node has
+a ~50% chance of landing in the other AZ, stranding Postgres as `Pending` with
+`volume node affinity conflict`.
+
 ## What it costs
 
-| | |
-|---|---|
-| EKS control plane | $0.10/hr — **~$73/mo, no free tier, billed idle** |
-| 2× t3.medium SPOT | ~$18/mo |
-| 2× 20GB gp3 EBS | ~$3/mo |
-| NAT Gateway | **$0** — not created ([why](./modules/network/main.tf)) |
-| Load balancer | **$0** — not created; use `kubectl port-forward` |
-| **while running** | **~$0.13/hr ≈ $3.10/day** |
+| | Rate | Monthly |
+|---|---|---|
+| EKS control plane | $0.10/hr | **~$73** — flat, no free tier, billed idle |
+| 1× t3.medium SPOT | ~$0.0125/hr | ~$9 |
+| Node root EBS (20GB) | — | ~$1.60 |
+| Postgres PVC (8GB) | — | ~$0.64 |
+| NAT Gateway | — | **$0** — not created ([why](./modules/network/main.tf)) |
+| Load balancer | — | **$0** — not created; use `kubectl port-forward` |
+| **running, 1 node** | **~$0.115/hr** | **~$84** |
+| **scaled to 0** | ~$0.101/hr | ~$74 |
+| **destroyed** | — | ~$0 |
 
-On $300 of credits an always-on cluster lasts ~3 months. Destroying it between
-sessions makes that credit last far longer — the VPC and state bucket cost
-essentially nothing while the cluster is gone.
+The control plane is ~87% of the bill, so **`scale.sh 0` only saves ~13%**.
+It is for "back tomorrow", not for real savings — `destroy.sh` is the only
+thing that stops the meter. On $300 of credits an always-on cluster lasts
+~3.5 months; destroying it between sessions makes that last far longer.
 
 ## Deliberately not here
 

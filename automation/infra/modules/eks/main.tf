@@ -9,6 +9,10 @@ data "aws_region" "current" {}
 
 locals {
   cluster_name = "${var.name_prefix}-eks"
+
+  # Fall back to the control plane's subnets when no node-specific ones are
+  # given, so the common case needs only one input.
+  node_subnet_ids = length(var.node_subnet_ids) > 0 ? var.node_subnet_ids : var.subnet_ids
   # arn:aws:... in commercial regions, arn:aws-cn / arn:aws-us-gov elsewhere.
   # Hardcoding "aws" works until it silently does not.
   arn_prefix = "arn:${data.aws_partition.current.partition}:iam::aws:policy"
@@ -159,7 +163,10 @@ resource "aws_eks_node_group" "this" {
   cluster_name    = aws_eks_cluster.this.name
   node_group_name = "${var.name_prefix}-ng"
   node_role_arn   = aws_iam_role.node.arn
-  subnet_ids      = var.subnet_ids
+
+  # Node group subnets, NOT the control plane's. Pin to one AZ for a
+  # single-node cluster -- see node_subnet_ids in variables.tf.
+  subnet_ids = local.node_subnet_ids
 
   instance_types = [var.node_instance_type]
   capacity_type  = var.node_capacity_type

@@ -57,16 +57,57 @@ automation/infra/
 | Item | Rate | Monthly if left running |
 |---|---|---|
 | EKS control plane | $0.10/hr | **~$73** |
-| 2× t3.medium SPOT | ~$0.025/hr | ~$18 |
-| 2× 20GB gp3 | — | ~$3 |
+| 1× t3.medium SPOT | ~$0.0125/hr | ~$9 |
+| Node root EBS (20GB gp3) | — | ~$1.60 |
+| Postgres PVC (8GB gp3) | — | ~$0.64 |
 | NAT / ALB | $0 | $0 |
-| **Total** | **~$0.13/hr** | **~$94** |
+| **Total, 1 node** | **~$0.115/hr** | **~$84** |
 
-The control plane is the whole story: it is a flat hourly charge with **no free
-tier**, billed from cluster creation to cluster deletion regardless of load. On
-$300 of credits, always-on ≈ 3 months. `./destroy.sh` between sessions turns
-that into months of actual working time, because a destroyed cluster bills
-nothing and the VPC is free to leave in place.
+The control plane is the whole story: a flat hourly charge with **no free
+tier**, billed from cluster creation to cluster deletion regardless of load —
+about **87% of the bill** at one node.
+
+### Scaling to 0 between sessions
+
+```bash
+./scale.sh dev          # show current state
+./scale.sh dev 0        # 0 nodes
+./scale.sh dev 1        # 1 node, waits until Ready
+```
+
+| State | Cost/month | What survives |
+|---|---|---|
+| 1 node | ~$84 | everything, running |
+| **0 nodes** | **~$74** | cluster, Helm releases, PVC data — pods `Pending` |
+| destroyed | ~$0 | S3 state only |
+
+Two things to be clear about:
+
+1. **Scaling to 0 saves only ~13%** (~$11/month). The control plane and the
+   Postgres volume keep billing. It is the right move for "I'll be back
+   tomorrow" because nothing is lost — no Helm reinstall, no data loss — but it
+   is **not** the way to save money. `./destroy.sh` is.
+2. **It requires two configuration changes**, both already made:
+   - `eks_node_count_min: 0` — AWS rejects `desired_size = 0` while `min_size`
+     is 1.
+   - `eks_node_az_suffixes: ["a"]` — pins the node group to **one AZ**.
+
+The second one is the subtle one. An EBS volume lives in exactly one
+availability zone, and so must the pod that mounts it. With the node group
+spread across two AZs and only one node, the replacement node has a ~50%
+chance of coming up in the AZ *without* the Postgres volume — and the pod then
+sits `Pending` forever with `volume node affinity conflict`. Pinning the nodes
+removes the coin flip. The **control plane** still spans both AZs, because EKS
+requires that; only the node group is pinned.
+
+That means `subnet_ids` (control plane) and `node_subnet_ids` (node group) are
+separate inputs to the eks module — the same split the bluedots reference repo
+makes with `eks_node_subnet_keys`, and for exactly this reason.
+
+`scale.sh` uses the AWS API (`aws eks update-nodegroup-config`) rather than
+Tofu, because it is instant and because `modules/eks` sets
+`ignore_changes = [scaling_config[0].desired_size]` — so the next
+`tofu apply` will not undo whatever you scaled to.
 
 ### Running it
 
@@ -253,3 +294,21 @@ exits immediately, taking the variables with it. This is why environment setup
 scripts must be sourced, and why `provision.sh` sources `tf.sh` itself rather
 than trusting you to have done it: a child shell inherits only *exported*
 variables from its parent, so `bash provision.sh` starts with none of them.
+
+**Scaling a node group to 0** — supported by EKS managed node groups, provided
+`min_size` is also 0. Pods become `Pending`; nothing is deleted. Deployments,
+StatefulSets, Services and PVCs are all cluster state, independent of whether
+any node exists to run them on. That is why no Helm reinstall is needed on
+scale-up.
+
+**`volume node affinity conflict`** — the error you get when a pod's PVC is
+bound to a volume in AZ *a* but the only available node is in AZ *b*. EBS
+volumes cannot cross availability zones. The fixes, in order of preference:
+pin the node group to one AZ (what we did), run a node per AZ, or move the
+database off EBS entirely (RDS).
+
+**Control plane vs data plane cost** — worth internalising, because it drives
+every EKS cost decision: the control plane is a fixed $73/month you cannot
+reduce, scale, or pause. Only deleting the cluster stops it. Everything you can
+actually tune — instance type, node count, SPOT, storage — is the smaller
+share of a small cluster's bill.
