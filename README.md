@@ -58,7 +58,7 @@ Verify:
 
 ```bash
 cd automation/infra
-./create_tf_backend.sh dev && source ./tf.sh
+./create_tf_backend.sh dev     # once per account; writes tf.sh
 ./provision.sh dev --plan      # review first
 ./provision.sh dev             # ~15 min
 ```

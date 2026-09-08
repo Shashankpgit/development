@@ -2,8 +2,8 @@
 # ============================================================================
 # Provisions the VPC and the EKS cluster, then points kubectl at it.
 #
-#   source ./tf.sh          # once per shell (created by create_tf_backend.sh)
-#   ./provision.sh dev
+#   ./create_tf_backend.sh dev    # once per AWS account (writes tf.sh)
+#   ./provision.sh dev            # tf.sh is picked up automatically
 #   ./provision.sh dev --plan     # review only, change nothing
 #
 # Order is network -> eks. Terragrunt derives that from the `dependency`
@@ -20,10 +20,21 @@ step() { printf '\n\033[1;35m▸ %s\033[0m\n' "$1"; }
 
 [[ -d "$STACK" ]] || { echo "no such environment: $ENV_DIR"; exit 1; }
 
+# tf.sh holds AWS_REGION and TF_STATE_BUCKET, written by create_tf_backend.sh.
+#
+# WHY SOURCE IT HERE instead of asking you to: `source` only sets variables in
+# the shell that runs it, and `bash provision.sh` starts a NEW shell that
+# inherits nothing. Making the script read its own config removes a whole
+# class of "not set" error that has nothing to do with your infrastructure.
+if [[ -f "$HERE/tf.sh" ]]; then
+  # shellcheck source=/dev/null
+  source "$HERE/tf.sh"
+fi
+
 # Checking these up front turns three separate confusing failures into one
 # clear message.
-: "${TF_STATE_BUCKET:?not set -- run ./create_tf_backend.sh $ENV_DIR then: source ./tf.sh}"
-: "${AWS_REGION:?not set -- source ./tf.sh}"
+: "${TF_STATE_BUCKET:?not set -- run ./create_tf_backend.sh $ENV_DIR first (it writes tf.sh)}"
+: "${AWS_REGION:?not set -- run ./create_tf_backend.sh $ENV_DIR first (it writes tf.sh)}"
 command -v terragrunt >/dev/null || { echo "terragrunt is required"; exit 1; }
 command -v tofu       >/dev/null || { echo "opentofu is required"; exit 1; }
 aws sts get-caller-identity >/dev/null 2>&1 || { echo "AWS credentials are not valid"; exit 1; }

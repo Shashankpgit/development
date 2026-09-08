@@ -24,8 +24,7 @@ infra/
 ## Use it
 
 ```bash
-./create_tf_backend.sh dev      # once per account
-source ./tf.sh                  # once per shell
+./create_tf_backend.sh dev      # once per account; writes tf.sh
 ./provision.sh dev --plan       # review, change nothing
 ./provision.sh dev              # ~15 minutes
 ```

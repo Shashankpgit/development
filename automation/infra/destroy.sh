@@ -3,7 +3,6 @@
 # Tears the environment down. Run this at the end of a session -- the EKS
 # control plane costs $0.10/hour whether or not anything is deployed on it.
 #
-#   source ./tf.sh
 #   ./destroy.sh dev            # cluster only, keeps the VPC (default)
 #   ./destroy.sh dev --all      # cluster AND VPC
 #
@@ -20,8 +19,19 @@ STACK="$HERE/$ENV_DIR"
 step() { printf '\n\033[1;35m▸ %s\033[0m\n' "$1"; }
 
 [[ -d "$STACK" ]] || { echo "no such environment: $ENV_DIR"; exit 1; }
-: "${TF_STATE_BUCKET:?not set -- source ./tf.sh}"
-: "${AWS_REGION:?not set -- source ./tf.sh}"
+# tf.sh holds AWS_REGION and TF_STATE_BUCKET, written by create_tf_backend.sh.
+#
+# WHY SOURCE IT HERE instead of asking you to: `source` only sets variables in
+# the shell that runs it, and `bash provision.sh` starts a NEW shell that
+# inherits nothing. Making the script read its own config removes a whole
+# class of "not set" error that has nothing to do with your infrastructure.
+if [[ -f "$HERE/tf.sh" ]]; then
+  # shellcheck source=/dev/null
+  source "$HERE/tf.sh"
+fi
+
+: "${TF_STATE_BUCKET:?not set -- expected $HERE/tf.sh from create_tf_backend.sh}"
+: "${AWS_REGION:?not set -- expected $HERE/tf.sh from create_tf_backend.sh}"
 export TG_TF_PATH="${TG_TF_PATH:-tofu}"
 
 echo "About to destroy: $ENV_DIR ($SCOPE)"

@@ -73,8 +73,7 @@ nothing and the VPC is free to leave in place.
 ```bash
 cd automation/infra
 
-./create_tf_backend.sh dev      # once per AWS account
-source ./tf.sh                  # once per shell: AWS_REGION + TF_STATE_BUCKET
+./create_tf_backend.sh dev      # once per AWS account; writes tf.sh
 
 ./provision.sh dev --plan       # review the whole stack, change nothing
 ./provision.sh dev              # network → eks → kubeconfig → StorageClass
@@ -247,3 +246,10 @@ in code, fighting the autoscaler and possibly evicting pods.
 **`default_tags` on the provider** — applies tags to every taggable resource.
 This is what makes "what is this cluster costing me?" answerable in Cost
 Explorer; untagged resources are effectively invisible there.
+
+**`source` vs executing a script** — `source ./tf.sh` runs it in your *current*
+shell, so the exports persist. `bash ./tf.sh` runs it in a child shell that
+exits immediately, taking the variables with it. This is why environment setup
+scripts must be sourced, and why `provision.sh` sources `tf.sh` itself rather
+than trusting you to have done it: a child shell inherits only *exported*
+variables from its parent, so `bash provision.sh` starts with none of them.
