@@ -42,3 +42,8 @@ provider.tf
 # Written by create_tf_backend.sh. Contains your AWS account id in the bucket
 # name, and is regenerated per account, so it is local-only.
 tf.sh
+
+# Standalone kubeconfigs written by automation/infra/kubeconfig.sh --standalone.
+# Not secret for EKS (they contain an exec plugin, not a token) but they are
+# per-machine and per-cluster, so there is nothing to gain by committing them.
+kubeconfig-*.yaml

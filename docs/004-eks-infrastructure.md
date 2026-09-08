@@ -312,3 +312,21 @@ every EKS cost decision: the control plane is a fixed $73/month you cannot
 reduce, scale, or pause. Only deleting the cluster stops it. Everything you can
 actually tune — instance type, node count, SPOT, storage — is the smaller
 share of a small cluster's bill.
+
+**`aws eks update-kubeconfig` does not download anything** — despite how it
+reads. The AWS CLI builds the config locally from the cluster's endpoint and
+CA certificate (both public API data) and writes a context into
+`~/.kube/config`. `provision.sh` runs it as step 3; `kubeconfig.sh` does the
+same standalone.
+
+**EKS kubeconfigs contain no token** — the file holds an `exec` plugin entry
+that shells out to `aws eks get-token` on every `kubectl` call. So access
+follows your live AWS credentials and expires with them. Two consequences: the
+file is not a secret in the way a token-based kubeconfig would be, and when
+`kubectl` starts failing with auth errors the thing to refresh is your **AWS**
+session, not anything Kubernetes-side.
+
+**`KUBECONFIG` as a safety habit** — with several clusters in one
+`~/.kube/config`, a mistyped command can hit the wrong one. Writing each
+cluster to its own file (`kubeconfig.sh dev --standalone`) and scoping it per
+shell means the wrong cluster simply is not addressable.

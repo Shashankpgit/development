@@ -18,6 +18,7 @@ infra/
 │   └── eks/terragrunt.hcl
 ├── create_tf_backend.sh    run once: S3 state bucket + tf.sh
 ├── provision.sh            network → eks → kubeconfig → StorageClass
+├── kubeconfig.sh           point kubectl at the cluster (provision.sh does this too)
 ├── scale.sh                node group to 0 / back to 1, between sessions
 └── destroy.sh              tear down (run this; the control plane bills hourly)
 ```
@@ -28,6 +29,14 @@ infra/
 ./create_tf_backend.sh dev      # once per account; writes tf.sh
 ./provision.sh dev --plan       # review, change nothing
 ./provision.sh dev              # ~15 minutes
+```
+
+`provision.sh` fetches the kubeconfig itself as step 3. If you ran `terragrunt`
+directly, or you're on another machine:
+
+```bash
+./kubeconfig.sh dev               # merge into ~/.kube/config
+./kubeconfig.sh dev --standalone  # separate file, keeps ~/.kube/config clean
 ```
 
 When you're done for the day:
