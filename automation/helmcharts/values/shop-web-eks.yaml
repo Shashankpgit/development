@@ -8,7 +8,15 @@ image:
   tag: "1.0.0"
   pullPolicy: IfNotPresent
 
-replicaCount: 2
+# 1, not 2. A t3.small allows 11 pods and kube-system uses 7 of them, leaving
+# 4 slots for 3 app pods (api + web + postgres) plus one spare for a rolling
+# update's surge pod. Two replicas each would not fit.
+#
+# Consequence to be aware of: with one replica this Deployment has no
+# redundancy, and the PodDisruptionBudget is skipped automatically (the
+# template requires replicaCount > 1) -- a PDB with minAvailable=1 over a
+# single replica would block node drains forever.
+replicaCount: 1
 
 resources:
   requests:

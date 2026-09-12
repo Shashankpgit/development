@@ -2,23 +2,41 @@
 # Every value that defines the "dev" environment. One file, so a second
 # environment is a copy of this directory with this file edited.
 #
-# COST NOTE -- what actually bills here (credits, not free-tier resources):
+# COST NOTE -- what actually bills here.
+#
+# IMPORTANT ACCOUNT CONSTRAINT (discovered the hard way, 2026-09-08):
+# this account is on an AWS **Free Tier plan**, which restricts EC2 to
+# free-tier-ELIGIBLE instance types at the account level -- independent of the
+# $300 credit balance. Anything else fails at launch with:
+#   "InvalidParameterCombination - The specified instance type is not
+#    eligible for Free Tier"
+# and the node group sits in CREATING for ~25 minutes before failing.
+#
+# List what is permitted with:
+#   aws ec2 describe-instance-types --filters Name=free-tier-eligible,Values=true
+#
+# In ap-south-1 that is: t3.micro, t3.small, t4g.micro, t4g.small,
+# c7i-flex.large, m7i-flex.large.
+#   - t4g.* are ARM (Graviton). Our images are linux/amd64, so they would
+#     fail with "exec format error". Excluded.
+#   - t3.micro allows only 4 pods, and kube-system alone needs 7. Unusable.
+#   - c7i-flex.large / m7i-flex.large are roomy but 4-5x the hourly cost.
+# t3.small is the cheapest type that can actually run Kubernetes plus this app.
 #
 #   EKS control plane   $0.10/hr    ~$73/month   <- flat, no free tier, ever
-#   1x t3.medium SPOT   ~$0.0125/hr ~$9/month    <- ~70% off on-demand
+#   1x t3.small         $0.0224/hr  ~$16/month   <- ON_DEMAND; SPOT is also
+#                                                   blocked on this plan
 #   node root EBS 20GB  ~$1.60/month
 #   Postgres PVC 8GB    ~$0.64/month
-#   NAT Gateway         $0                       <- not created; see modules/network
-#   Load Balancer       $0                       <- not created; use port-forward
+#   NAT Gateway         $0                       <- not created
+#   Load Balancer       $0                       <- not created
 #   -----------------------------------------------------------------------
-#   running, 1 node     ~$0.115/hr = ~$2.75/day = ~$84/month
-#   scaled to 0 nodes   ~$0.101/hr             = ~$74/month  (saves ~13%)
+#   running, 1 node     ~$0.122/hr = ~$2.95/day = ~$89/month
+#   scaled to 0 nodes   ~$0.101/hr             = ~$74/month
 #   destroyed           ~$0/month
 #
-# The control plane is ~87% of the bill at one node and is charged per hour
-# from cluster creation to cluster deletion regardless of load. So:
-#   ./scale.sh dev 0   -> back tomorrow; keeps cluster, releases and data
-#   ./destroy.sh dev   -> done for a while; the only real saving
+# $300 of credits lasts ~3.3 months always-on. The control plane is ~82% of
+# the bill, so ./destroy.sh remains the only meaningful saving.
 # ============================================================================
 
 global:
@@ -45,12 +63,25 @@ global:
   eks_cluster_log_types: []
 
   # --- eks nodes -----------------------------------------------------------
-  # t3.medium allows 17 pods/node. t3.small allows only 11, and kube-system
-  # takes 4-5 of those. See modules/eks/variables.tf for the full table.
-  eks_node_instance_type: t3.medium
-  # SPOT: ~70% cheaper, reclaimable with 2 minutes' notice. Good for learning
-  # precisely because it exercises your PodDisruptionBudget for real.
-  eks_node_capacity_type: SPOT
+  # t3.small: 2 vCPU, 2GB, **11 pods max**. Forced by the Free Tier plan (see
+  # the cost note above) -- t3.medium is not free-tier-eligible and fails at
+  # launch.
+  #
+  # The 11-pod ceiling is the binding constraint, not CPU or memory. On a
+  # single node kube-system already uses 7:
+  #   aws-node, kube-proxy, ebs-csi-node   (DaemonSets)   3
+  #   coredns x2, ebs-csi-controller x2                   4
+  # leaving 4 slots. Hence shop-api and shop-web run 1 replica each on EKS
+  # (see values/shop-api-eks.yaml), for 3 app pods and 1 spare.
+  #
+  # To get more slots without a bigger instance, enable prefix delegation on
+  # the vpc-cni addon (ENABLE_PREFIX_DELEGATION=true) -- it raises t3.small to
+  # ~110 pods. Not done here because 2GB of RAM becomes the real limit anyway.
+  eks_node_instance_type: t3.small
+  # ON_DEMAND, not SPOT: the Free Tier plan blocks Spot too -- the launch
+  # failure above was "Could not launch Spot Instances ... not eligible for
+  # Free Tier". scale.sh still works exactly the same on ON_DEMAND.
+  eks_node_capacity_type: ON_DEMAND
   eks_node_count_desired: 1
   # 0 so `./scale.sh dev 0` is allowed -- AWS rejects desired_size 0 while
   # min_size is 1. See the cost note on node_count_min in modules/eks.
